@@ -3,49 +3,49 @@ from matplotlib import pyplot as plt
 from PIL import Image
 import copy
 
-def  find_neighbors(position, map, neighbors_num = 4):
+
+def  find_neighbors(position, map, neighbours_num = 4):
     height, width = map.shape
     y,x = position
     neighbors = []
 
-    if neighbors_num == 4:
-        if x-1 >= 0 and map[y][x-1] == 0:
-            neighbors.append((position[0],position[1]-1))
-            
-        if y-1 >= 0 and map[y-1][x] == 0:
-            neighbors.append((position[0]-1,position[1]))
-
-        if x+1 < width and map[y][x+1] == 0:
-            neighbors.append((position[0],position[1]+1))
-            
-        if y+1 < height and map[y+1][x] == 0:
-            neighbors.append((position[0]+1,position[1]))
-    
-    elif neighbors_num == 8:
-        pass
-
-    return neighbors 
-
-
-def  find_neighbors2(position, map, neighbors_num = 4):
-    height, width = map.shape
-    y,x = position
-    neighbors = []
-
-    if neighbors_num == 4:
+    if neighbours_num == 4:
         if x-1 >= 0 :
-            neighbors.append((position[0],position[1]-1))
+            neighbors.append((position[0],position[1]-1)) # left
             
         if y-1 >= 0:
-            neighbors.append((position[0]-1,position[1]))
+            neighbors.append((position[0]-1,position[1])) # up
 
         if x+1 < width:
-            neighbors.append((position[0],position[1]+1))
+            neighbors.append((position[0],position[1]+1)) # right
             
         if y+1 < height:
-            neighbors.append((position[0]+1,position[1]))
+            neighbors.append((position[0]+1,position[1])) # down
     
-    elif neighbors_num == 8:
+    elif neighbours_num == 8:
+        if x-1 >= 0 :
+            neighbors.append((position[0],position[1]-1)) # left
+            
+        if y-1 >= 0:
+            neighbors.append((position[0]-1,position[1])) # up
+
+        if x+1 < width:
+            neighbors.append((position[0],position[1]+1)) # right
+            
+        if y+1 < height:
+            neighbors.append((position[0]+1,position[1])) # down
+
+        if x-1 >= 0 and y-1 >= 0:
+            neighbors.append((position[0]-1,position[1]-1)) # left up
+            
+        if y-1 >= 0 and x+1 < width:
+            neighbors.append((position[0]-1,position[1]+1)) # right up
+
+        if x+1 < width and y+1 < height:
+            neighbors.append((position[0]+1,position[1]+1)) # right down 
+            
+        if y+1 < height and x-1 >= 0:
+            neighbors.append((position[0]+1,position[1]-1)) # left down
         pass
             
     return neighbors 
@@ -83,7 +83,7 @@ def find_neighbors(targ_coord,n, map):
     return np.array(neighbours)"""
 
 
-def bushfire (map):
+def bushfire (map, neighbours_num):
 
     L = list(np.argwhere(map == 1)) # get a list of all the elements in the map == 1
 
@@ -91,7 +91,7 @@ def bushfire (map):
 
         actual = L.pop() # pop the last neightbor in the list
         #neighbors = find_neighbors(actual,map)
-        neighbors = find_neighbors(actual, map)
+        neighbors = find_neighbors(actual, map, neighbours_num=neighbours_num)
         for neighbor in neighbors:
             y,x = neighbor
             yact, xact = actual
@@ -101,20 +101,18 @@ def bushfire (map):
     
     return map
 
-def remove_edges (map):
-    # working on this    ##########################################################
-    i = 0
-    while map[i,i] == 1:
-        i += 1
+def remove_edges (map, edge_size = 3):
     
-    map[0:i, :] = 0
-    map[-i:-1,:] = 0
-    map[:, 0:i] = 0
-    map[:,-i:-1]
+    height, width = map.shape
+
+    map[0:edge_size, :] = 0
+    map[width-edge_size:width,:] = 0
+    map[:, 0:edge_size] = 0
+    map[:,height -edge_size:height] = 0
 
     return map
 
-def get_attraction_function(map, goal, z = 1, distance = "mht", points = 4):
+def get_attraction_function(map, goal, z = 1, distance = "mht", apply_scaling = True, scale_factor = 10):
     
     """ 
     8D connectivity:            4D conectivity:
@@ -122,89 +120,70 @@ def get_attraction_function(map, goal, z = 1, distance = "mht", points = 4):
     | 1   1    1 |              | 0    1    0 |
     | 1  goal  1 |              | 1  goal   1 |
     | 1   1    1 |              | 0    1    0 |
-    
-    where:
-        1 = neighbor
-        0 = not neighboor
-
     """
 
     height, width = map.shape
     ygoal, xgoal = goal
-
     attraction_grid = np.zeros((height, width))
 
-    if points == 4:
+    if distance == "d2":
+        """ to calculate the attraction a quadratic potential function is used:
+                        U_att (q) = 1/2 Z d^2 (q, q_goal)"""
+        for i in range(height):
+            for j in range( width):
+                attraction_grid[i][j] = .5*z*((j - xgoal)**2 + (i - ygoal)**2)
 
-        if distance == "d2":
-            """
-            to calculate the attraction a quadratic potential function is used:
-
-                           U_att (q) = 1/2 Z d^2 (q, q_goal)
-            """
-
-            for i in range(height):
-                for j in range( width):
-                    attraction_grid[i][j] = .5*z*((j - xgoal)**2 + (i - ygoal)**2)
-
-
-        if distance == "mht":
-            """
-            to calculate the attraction a quadratic potential function is used:
-
-                           U_att (q) = abs (delta in y) + abs (delta in x)
-            """
-
-            for i in range(height):
-                for j in range( width):
-                    attraction_grid[i][j] = abs((j - xgoal)) + abs((i - ygoal))
-
-    if points == 8:
-        
-        pass
-
+    if distance == "mht":
+        """to calculate the attraction a quadratic potential function is used:
+                        U_att (q) = abs (delta in y) + abs (delta in x)"""
+        for i in range(height):
+            for j in range( width):
+                attraction_grid[i][j] = abs((j - xgoal)) + abs((i - ygoal))
+    
+    if apply_scaling == True:
+        attraction_grid = attraction_grid/attraction_grid.max()*scale_factor
 
     return attraction_grid
 
 
-def get_repulsive_function (map, Q, eta = 20000):
+def get_repulsive_function (map, Q = 4, eta = 15):
     height, width = map.shape
 
     repuslsive_grid = np.zeros((height, width))
     
     for i in range(height):
         for j in range( width):
-            #if map[i,j] == 1:
-                #pass
             if map[i,j] > Q:
                 repuslsive_grid [i,j] = 0
             else: 
-                repuslsive_grid [i,j] = .5 * eta * ((1/map[i,j]) - 1/Q)**2
+                repuslsive_grid [i,j] = .5 * eta * ( (1/map[i,j]) - (1/Q) )**2
     return repuslsive_grid
 
 def get_gradient_descent(map, q_start):
 
-    E = -5
+    E = .001
     y,x = q_start
-    gradient_map = copy.deepcopy(map)
+    #gradient_map = copy.deepcopy(map)
+    gradient_listx = []
+    gradient_listy = []
 
-    dq = 0
+    dq = 100
 
     while abs(dq)> E:
-        neighbours = find_neighbors2(q_start, map, 4)
+        neighbours = find_neighbors((y,x), map, 4)
         temp_neig_dq = []
 
         for i in neighbours:
-            dq = map[i[0],i[1]] - map[q_start[0],q_start[1]]
-            temp_neig_dq.append(dq) 
-            
-            gradient_map[i[0],i[1]] = dq
+            dq = map[i[0],i[1]] - map[y,x]
+            temp_neig_dq.append(dq)  
+            #gradient_map[i[0],i[1]] = dq
 
         dq = min(temp_neig_dq)
-        q_start = neighbours[temp_neig_dq.index(dq)] # get the min dq on the neighbourhood, get the index of that neighbour, and use that index to get the position
-
-    return gradient_map
-
+        y,x = neighbours[temp_neig_dq.index(dq)] # get the min dq on the neighbourhood, get the index of that neighbour, and use that index to get the position
+        gradient_listx.append(x)
+        gradient_listy.append(y)
+    
+    return gradient_listx, gradient_listy
 
 
 # Load grid map 
@@ -216,57 +195,56 @@ grid_map[grid_map > 0.5] = 1
 grid_map[grid_map <= 0.5] = 0
 
 # Invert colors to make 0 -> free and 1 -> occupied
-inv_grid_map = (grid_map * -1) + 1
+map = (grid_map * -1) + 1
+map = remove_edges(map)
 
-####################################### testing the brush fire #######################################
+
+# Uncooment to plot map
+""""
+plt.matshow(map)
+plt.colorbar()
+plt.show()
 """
-map = np.array([[0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,1,1,1,0,0,0,0],
-                [0,0,0,1,1,1,0,0,0,0],
-                [0,0,0,1,1,1,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0]])""" 
 
+goal = (110, 40)
+start = (10, 10)
 
-map = inv_grid_map
-#map = remove_edges(map)
+#map = np.array([[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,1,1,0,0,0,0],[0,0,0,0,1,1,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0]])
 
-dist_to_obstacle = bushfire(map)
+dist_to_obstacle = bushfire(copy.deepcopy(map), 8)
+"""
 plt.matshow(dist_to_obstacle)
 plt.colorbar()
 plt.show()
+"""
 
-repulsive_grid = get_repulsive_function(dist_to_obstacle, 4)
+repulsive_grid = get_repulsive_function(dist_to_obstacle, Q = 10)
+"""
 plt.matshow(repulsive_grid)
 plt.colorbar()
 plt.show()
+"""
 
-
-####################################### testing the atraction #######################################
-
-#map = np.zeros((100,100))
-goal = (110, 40)
-start = (10, 10)
-atraction_grid = get_attraction_function(map, goal, distance = "d2")
-
-#atraction_grid = ((atraction_grid * -1) + np.max(atraction_grid))/np.max(atraction_grid)
-
+atraction_grid = get_attraction_function(map, goal,distance = "d2")
+"""
 plt.matshow(atraction_grid)
 plt.colorbar()
+plt.scatter(goal[1], goal[0], c="r",  marker=(5, 1))
 plt.show()
-
+"""
 
 potential = atraction_grid + repulsive_grid
+"""
 plt.matshow(potential)
 plt.colorbar()
+plt.scatter(goal[1], goal[0], c="r",  marker=(5, 1))
 plt.show()
+"""
 
-gradient_map = get_gradient_descent(map, start)
+gradient_listx, gradient_listy = get_gradient_descent(potential, start)
 
-plt.matshow(gradient_map)
+plt.matshow(map)
 plt.colorbar()
+plt.scatter(gradient_listx, gradient_listy, s=2, marker = "*", c="r")
+plt.scatter(goal[1], goal[0], c="r",  marker=(5, 1))
 plt.show()
