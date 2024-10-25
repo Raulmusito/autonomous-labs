@@ -1,0 +1,127 @@
+import numpy as np
+from matplotlib import pyplot as plt
+from PIL import Image
+"""
+# Load grid map
+image = Image.open('data/map0.png').convert('L')
+print ("image", image)
+grid_map = np.array(image.getdata()).reshape(image.size[0], image.size[1])/255
+print ("gm", grid_map)
+# binarize the image
+grid_map[grid_map > 0.5] = 1
+grid_map[grid_map <= 0.5] = 0
+# Invert colors to make 0 -> free and 1 -> occupied
+inv_grid_map = (grid_map * -1) + 1
+# Show grid map
+plt.matshow(inv_grid_map)
+plt.colorbar()
+plt.show()
+"""
+
+start = (10,10)
+goal = (110,40)
+goal2 = (90,70)
+
+
+"""
+to use later
+
+############################ with map 1 ############################
+start = (60,60)
+goal = (90,60)
+
+############################ with map 2 ############################
+start = (8,31)
+goal = (139,38)
+
+############################ with map 3 ############################
+start = (50,90)
+goal = (375,375)
+"""
+
+
+def  find_neighbors(position, height, width, grid):
+    y,x = position
+    neighbors = []
+    if x-1 >= 0 and grid[y][x-1] == 0:
+        neighbors.append((position[0],position[1]-1))
+        
+    if y-1 >= 0 and grid[y-1][x] == 0:
+        neighbors.append((position[0]-1,position[1]))
+
+    if x+1 < width and grid[y][x+1] == 0:
+        neighbors.append((position[0],position[1]+1))
+        
+    if y+1 < height and grid[y+1][x] == 0:
+        neighbors.append((position[0]+1,position[1]))
+         
+    return neighbors
+
+
+def get_attraction_function(map, goal, z = 1, distance = "mht", points = 4):
+    
+    """ 
+    8D connectivity:            4D conectivity:
+
+    | 1   1    1 |              | 0    1    0 |
+    | 1  goal  1 |              | 1  goal   1 |
+    | 1   1    1 |              | 0    1    0 |
+    
+    where:
+        1 = neighbor
+        0 = not neighboor
+
+    """
+
+    height, width = map.shape
+    ygoal, xgoal = goal
+
+    attraction_grid = np.zeros((height, width))
+
+    if points == 4:
+
+        if distance == "d2":
+            """
+            to calculate the attraction a quadratic potential function is used:
+
+                           U_att (q) = 1/2 Z d^2 (q, q_goal)
+            """
+
+            for i in range(height):
+                for j in range( width):
+                    attraction_grid[i][j] = .5*z*((j - xgoal)**2 + (i - ygoal)**2)
+
+
+        if distance == "mht":
+            """
+            to calculate the attraction a quadratic potential function is used:
+
+                           U_att (q) = abs (delta in y) + abs (delta in x)
+            """
+
+            for i in range(height):
+                for j in range( width):
+                    attraction_grid[i][j] = abs((j - xgoal)) + abs((i - ygoal))
+
+    if points == 8:
+        
+        pass
+
+
+    return attraction_grid
+
+def brushfire (map, ):
+
+    pass
+
+
+map = np.zeros((100,100))
+goal = (50,30 )
+atraction_grid = get_attraction_function(map, goal, distance = "d2")
+
+#atraction_grid = ((atraction_grid * -1) + np.max(atraction_grid))/np.max(atraction_grid)
+
+
+plt.matshow(atraction_grid)
+plt.colorbar()
+plt.show()
