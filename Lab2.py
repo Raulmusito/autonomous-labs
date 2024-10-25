@@ -168,7 +168,8 @@ def get_gradient_descent(map, q_start):
     gradient_listy = []
 
     dq = 100
-
+    c = 0
+    
     while abs(dq)> E:
         neighbours = find_neighbors((y,x), map, 4)
         temp_neig_dq = []
@@ -182,6 +183,10 @@ def get_gradient_descent(map, q_start):
         y,x = neighbours[temp_neig_dq.index(dq)] # get the min dq on the neighbourhood, get the index of that neighbour, and use that index to get the position
         gradient_listx.append(x)
         gradient_listy.append(y)
+        if c > 500:
+            break
+
+        c += 1
     
     return gradient_listx, gradient_listy
 
@@ -206,6 +211,7 @@ plt.colorbar()
 plt.show()
 """
 
+#goal = (90, 70)
 goal = (110, 40)
 start = (10, 10)
 
@@ -245,6 +251,6 @@ gradient_listx, gradient_listy = get_gradient_descent(potential, start)
 
 plt.matshow(map)
 plt.colorbar()
-plt.scatter(gradient_listx, gradient_listy, s=2, marker = "*", c="r")
+plt.scatter(gradient_listx, gradient_listy, s=2, marker = "*", c="b")
 plt.scatter(goal[1], goal[0], c="r",  marker=(5, 1))
 plt.show()
