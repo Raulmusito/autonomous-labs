@@ -95,7 +95,7 @@ Implement a function that computes the attraction function given a `grid_map` an
 
 > *Example:*
 
-<img src="../data/Attraction%20Potential%20Function.png" width="400px"/>
+<img src="data/Attraction%20Potential%20Function.png" width="400px"/>
 
 ### Repulsive function
 
@@ -136,7 +136,7 @@ Implement a function for the `brushfire` algorithm that given a `grid_map` as in
 
 > *Example:*
 
-<img src="../data/Distance to Nearest Obstacle.png" width="400px"/>
+<img src="data/Distance to Nearest Obstacle.png" width="400px"/>
 
 #### Exercise 3:
 Implement a function to compute the repulsive function given a map of distances and a `Q` value. The output of this function is a 2D matrix with the same size as the input map of distances in which each cell contains the repulsive potential to the obstacles. Generate an image with the repulsive function
@@ -144,7 +144,7 @@ Implement a function to compute the repulsive function given a map of distances 
 
 > *Example:*
 
-<img src="../data/Repulsive Potential Function.png" width="400px"/>
+<img src="data/Repulsive Potential Function.png" width="400px"/>
 
 ### Total Potential Function: combining the Attraction and Repulsive functions
 
@@ -158,7 +158,7 @@ Implement a function that combines the attraction and repulsive functions. The o
 
 > *Example:*
 
-<img src="../data/Total potential Function.png" width="400px"/>
+<img src="data/Total potential Function.png" width="400px"/>
 
 ## Part 2
 
@@ -210,7 +210,7 @@ To test it, use `map0.png` with the start position at $(10, 10)$ and the goal po
 
 > *Example:*
 
-<img src="../data/Gradient Descent.png" width="400px"/>
+<img src="data/Gradient Descent.png" width="400px"/>
 
 ## Part 3
 
@@ -279,7 +279,7 @@ Implement a wave-front planner function. Given a `grid_map` as an image and a `g
 
 > *Example:*
 
-<img src="../data/Wave-front Map.png" width="400px"/>
+<img src="data/Wave-front Map.png" width="400px"/>
 
 ### Finding the path
 
@@ -306,7 +306,7 @@ Implement a function that given an `find_path` given an `attraction function` (f
 
 > *Example:*
 
-<img src="../data/Wave-Front Path.png" width="400px"/>
+<img src="data/Wave-Front Path.png" width="400px"/>
 
 
 ## Submission
