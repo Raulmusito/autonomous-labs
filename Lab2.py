@@ -213,7 +213,7 @@ def wave_front(q_goal,apply_scaling=True,n_neighbours=4):
         
         if len(valid_neigh)!=0:
             que.put(valid_neigh)
-    wave_map[np.where(wave_map == 1)]=900  #setting obs manually to max
+    wave_map[np.where(wave_map == 1)]=wave_map.max() + 1  #setting obs manually to max
     
     # if apply_scaling:
     #     wave_map =wave_map/wave_map.max()*200  # scalling
