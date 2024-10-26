@@ -2,7 +2,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from PIL import Image
 import copy
-
+import queue
 
 def  find_neighbors(position, map, neighbours_num = 4):
     height, width = map.shape
@@ -98,7 +98,7 @@ def bushfire (map, neighbours_num):
             if map[y][x] == 0:
                 map[y][x] = map[yact][xact] + 1
                 L =  [(y,x)]   + L 
-    
+
     return map
 
 def remove_edges (map, edge_size = 3):
@@ -189,8 +189,47 @@ def get_gradient_descent(map, q_start, neighbours_num = 8):
         c += 1
     
     return gradient_listx, gradient_listy
+###############################################
 
-map_number = 2
+
+def wave_front(q_goal,apply_scaling=True,n_neighbours=4):
+    wave_map = copy.deepcopy(map).astype(float)
+    value = 2
+    wave_map[q_goal[0],q_goal[1]] = value
+    que = queue.SimpleQueue()
+    que.put([q_goal])
+    while not que.empty():
+        value+=1
+        all_neigh = que.get() #all neighbours to be updated
+        valid_neigh = []
+        for p in all_neigh:
+            neigh = [list(t) for t in find_neighbors([*p], wave_map,n_neighbours)] #convert list of tuples to nested list
+            for n in neigh:
+                if list(n)!=q_goal and wave_map[n[0],n[1]]==0:
+                    wave_map[n[0],n[1]] = value
+                    valid_neigh.append(n)
+        if len(valid_neigh)!=0:
+            que.put(valid_neigh)
+    wave_map[np.where(wave_map == 1)]=200  #setting obs manually to max
+    # if apply_scaling:
+    #     wave_map =wave_map/wave_map.max()*200  # scalling
+    return wave_map
+
+def find_path(wave_map,q_start,q_goal,neighbours_num):
+    
+    pathx = []
+    pathy = []
+    while q_start!=q_goal:
+        neigh =find_neighbors(q_start,wave_map,neighbours_num)
+        q_start = neigh[np.argmin([wave_map[n] for n in neigh])]
+        pathx.append(q_start[1])
+        pathy.append(q_start[0])
+
+    return pathx,pathy
+
+####################################################3
+
+map_number = 3
 # Load grid map 
 image = Image.open('data/map'+str(map_number)+'.png').convert('L')
 grid_map = np.array(image.getdata()).reshape(image.size[0], image.size[1])/255
@@ -211,9 +250,11 @@ plt.colorbar()
 plt.show()
 """
 if map_number == 0:
-    goal = (90, 70)
-    #goal = (110, 40)
+    # goal = (90, 70)
+    goal = (110, 40)
     start = (10, 10)
+    # goal = (5,4) #for 10x10 grid
+    # start = (0,0)
 elif map_number == 1:
     goal = (90, 60)
     start = (60, 60)
@@ -224,7 +265,17 @@ elif map_number == 3:
     goal = (375, 375)
     start = (50, 90)
 
-#map = np.array([[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,1,1,0,0,0,0],[0,0,0,0,1,1,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0]])
+# map = np.array([[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,1,1,0,0,0,0],[0,0,0,0,1,1,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0]])
+# map = np.array([[0, 0, 0, 0, 0, 0, 0, 0, 0, 0,],
+#                 [0, 0, 0, 0, 0, 0, 0,  0, 0, 0,],
+#                 [0, 0,  1, 1,  1,  1,  1,  0,  0, 0,],
+#                 [0, 0,  1,  1,  1,  1,  1,  0,  0,  0,],
+#                 [0, 0,  1,  0,  0,  0,  0,  0,  0,  0,],
+#                 [0, 0,  1,  0,  0,  0,  0,  0,  0,  0,],
+#                 [0, 0,  1,  0,  0,  0,  0,  0,  0,  0,],
+#                 [0, 0,  1,  0,  0,  0,  0,  0,  0,  0,],
+#                 [0, 0,  1,  0,  0,  0,  0,  0,  0, 0,],
+#                 [0,  0,  0,  0,  0,  0,  0,  0, 0, 0,]])
 
 dist_to_obstacle = bushfire(copy.deepcopy(map), 8)
 """
@@ -256,10 +307,26 @@ plt.scatter(goal[1], goal[0], c="r",  marker=(5, 1))
 plt.show()
 """
 
-gradient_listx, gradient_listy = get_gradient_descent(potential, start, neighbours_num=8)
-
+gradient_listx, gradient_listy = get_gradient_descent(potential, start, neighbours_num=4)
+"""
 plt.matshow(potential)
 plt.colorbar()
 plt.scatter(gradient_listx, gradient_listy, s=2, marker = "*", c="b")
 plt.scatter(goal[1], goal[0], c="r",  marker=(5, 1))
+plt.show()
+"""
+
+wave_map = wave_front(goal,True)
+plt.matshow(wave_map)
+plt.colorbar()
+plt.scatter(goal[1], goal[0], c="r",  marker=(5, 1))
+plt.savefig(f"wave_front{map_number}.png")
+# plt.show()
+
+pathx,pathy = find_path(wave_map, start,goal, neighbours_num=4)
+plt.matshow(wave_map)
+plt.colorbar()
+plt.scatter(pathx, pathy, s=1, marker = "*", c="b")
+plt.scatter(goal[1], goal[0], c="r",  marker=(5, 1))
+plt.savefig(f"find_path_wave_front{map_number}.png")
 plt.show()
