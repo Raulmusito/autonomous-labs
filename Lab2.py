@@ -50,39 +50,6 @@ def  find_neighbors(position, map, neighbours_num = 4):
             
     return neighbors 
 
-"""
-def find_neighbors(targ_coord,n, map):
-    map_size = map.shape
-    neighbours = []
-    
-    for x, y in [targ_coord]:
-        # Check each of the four neighbors (up, down, left, right) and add valid ones to the list
-        if n ==4: potential_neighbors = [
-                        (x, y-1),  # Left
-                        (x-1, y),  # Up
-                        (x, y+1),  # Right
-                        (x+1, y)  # Down
-                    ]
-        else: potential_neighbors = [
-                        (x-1, y-1),  # Diagonal left Up
-                        (x-1, y),  # Up
-                        (x-1, y+1),  # Diagonal Right up
-                        (x, y-1),  # Left
-                        (x, y+1),  # Right
-                        (x+1, y-1),  # Diag left Down
-                        (x+1, y),  # Down
-                        (x+1, y+1),  # Down rihght down
-                    ]
-
-        # Loop through each neighbor and check if it's within bounds and matches the value 'i'
-        for nx, ny in potential_neighbors:
-            if 0 <= nx < map_size[0] and 0 <= ny < map_size[1]:  # Boundary check
-                if map[nx, ny] == 1:  # Check if the neighbor has the value 'i'
-                    neighbours.append([nx, ny])
-    
-    return np.array(neighbours)"""
-
-
 def bushfire (map, neighbours_num):
 
     L = list(np.argwhere(map == 1)) # get a list of all the elements in the map == 1
@@ -145,7 +112,6 @@ def get_attraction_function(map, goal, z = 1, distance = "mht", apply_scaling = 
 
     return attraction_grid
 
-
 def get_repulsive_function (map, Q = 4, eta = 15):
     height, width = map.shape
 
@@ -189,8 +155,6 @@ def get_gradient_descent(map, q_start, neighbours_num = 8):
         c += 1
     
     return gradient_listx, gradient_listy
-###############################################
-
 
 def wave_front(q_goal,apply_scaling=True,n_neighbours=4):
     wave_map = copy.deepcopy(map).astype(float)
@@ -231,25 +195,7 @@ def find_path(wave_map,q_start,q_goal,neighbours_num):
 
     return pathx,pathy
 
-####################################################
-
-map_number = 3
-# Load grid map 
-image = Image.open('data/map'+str(map_number)+'.png').convert('L')
-grid_map = np.array(image.getdata()).reshape(image.size[0], image.size[1])/255
-
-# binarize the image
-grid_map[grid_map > 0.5] = 1
-grid_map[grid_map <= 0.5] = 0
-
-# Invert colors to make 0 -> free and 1 -> occupied
-map = (grid_map * -1) + 1
-map = remove_edges(map)
-""""
-plt.matshow(map)
-plt.colorbar()
-plt.show()
-"""
+map_number = 3.0
 
 if map_number == 0:
     # goal = (90, 70)
@@ -267,17 +213,22 @@ elif map_number == 3:
     goal = (375, 375)
     start = (50, 90)
 
-# map = np.array([[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,1,1,0,0,0,0],[0,0,0,0,1,1,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0]])
-# map = np.array([[0, 0, 0, 0, 0, 0, 0, 0, 0, 0,],
-#                 [0, 0, 0, 0, 0, 0, 0,  0, 0, 0,],
-#                 [0, 0,  1, 1,  1,  1,  1,  0,  0, 0,],
-#                 [0, 0,  1,  1,  1,  1,  1,  0,  0,  0,],
-#                 [0, 0,  1,  0,  0,  0,  0,  0,  0,  0,],
-#                 [0, 0,  1,  0,  0,  0,  0,  0,  0,  0,],
-#                 [0, 0,  1,  0,  0,  0,  0,  0,  0,  0,],
-#                 [0, 0,  1,  0,  0,  0,  0,  0,  0,  0,],
-#                 [0, 0,  1,  0,  0,  0,  0,  0,  0, 0,],
-#                 [0,  0,  0,  0,  0,  0,  0,  0, 0, 0,]])
+# Load grid map 
+image = Image.open('data/map'+str(map_number)+'.png').convert('L')
+grid_map = np.array(image.getdata()).reshape(image.size[0], image.size[1])/255
+
+# binarize the image
+grid_map[grid_map > 0.5] = 1
+grid_map[grid_map <= 0.5] = 0
+
+# Invert colors to make 0 -> free and 1 -> occupied
+map = (grid_map * -1) + 1
+map = remove_edges(map)
+""""
+plt.matshow(map)
+plt.colorbar()
+plt.show()
+"""
 
 dist_to_obstacle = bushfire(copy.deepcopy(map), 8)
 """
