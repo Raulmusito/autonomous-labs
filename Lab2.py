@@ -159,7 +159,7 @@ def get_repulsive_function (map, Q = 4, eta = 15):
                 repuslsive_grid [i,j] = .5 * eta * ( (1/map[i,j]) - (1/Q) )**2
     return repuslsive_grid
 
-def get_gradient_descent(map, q_start):
+def get_gradient_descent(map, q_start, neighbours_num = 8):
 
     E = .001
     y,x = q_start
@@ -171,7 +171,7 @@ def get_gradient_descent(map, q_start):
     c = 0
     
     while abs(dq)> E:
-        neighbours = find_neighbors((y,x), map, 4)
+        neighbours = find_neighbors((y,x), map, neighbours_num)
         temp_neig_dq = []
 
         for i in neighbours:
@@ -190,9 +190,9 @@ def get_gradient_descent(map, q_start):
     
     return gradient_listx, gradient_listy
 
-
+map_number = 2
 # Load grid map 
-image = Image.open('data/map0.png').convert('L')
+image = Image.open('data/map'+str(map_number)+'.png').convert('L')
 grid_map = np.array(image.getdata()).reshape(image.size[0], image.size[1])/255
 
 # binarize the image
@@ -210,10 +210,19 @@ plt.matshow(map)
 plt.colorbar()
 plt.show()
 """
-
-#goal = (90, 70)
-goal = (110, 40)
-start = (10, 10)
+if map_number == 0:
+    goal = (90, 70)
+    #goal = (110, 40)
+    start = (10, 10)
+elif map_number == 1:
+    goal = (90, 60)
+    start = (60, 60)
+elif map_number == 2:
+    goal = (139, 38)
+    start = (8, 31)
+elif map_number == 3:
+    goal = (375, 375)
+    start = (50, 90)
 
 #map = np.array([[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,1,1,0,0,0,0],[0,0,0,0,1,1,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0]])
 
@@ -224,7 +233,7 @@ plt.colorbar()
 plt.show()
 """
 
-repulsive_grid = get_repulsive_function(dist_to_obstacle, Q = 10)
+repulsive_grid = get_repulsive_function(dist_to_obstacle, Q = 5, eta = 15)
 """
 plt.matshow(repulsive_grid)
 plt.colorbar()
@@ -247,9 +256,9 @@ plt.scatter(goal[1], goal[0], c="r",  marker=(5, 1))
 plt.show()
 """
 
-gradient_listx, gradient_listy = get_gradient_descent(potential, start)
+gradient_listx, gradient_listy = get_gradient_descent(potential, start, neighbours_num=8)
 
-plt.matshow(map)
+plt.matshow(potential)
 plt.colorbar()
 plt.scatter(gradient_listx, gradient_listy, s=2, marker = "*", c="b")
 plt.scatter(goal[1], goal[0], c="r",  marker=(5, 1))
