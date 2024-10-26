@@ -198,19 +198,23 @@ def wave_front(q_goal,apply_scaling=True,n_neighbours=4):
     wave_map[q_goal[0],q_goal[1]] = value
     que = queue.SimpleQueue()
     que.put([q_goal])
+
     while not que.empty():
         value+=1
         all_neigh = que.get() #all neighbours to be updated
         valid_neigh = []
+        
         for p in all_neigh:
             neigh = [list(t) for t in find_neighbors([*p], wave_map,n_neighbours)] #convert list of tuples to nested list
             for n in neigh:
                 if list(n)!=q_goal and wave_map[n[0],n[1]]==0:
                     wave_map[n[0],n[1]] = value
                     valid_neigh.append(n)
+        
         if len(valid_neigh)!=0:
             que.put(valid_neigh)
-    wave_map[np.where(wave_map == 1)]=200  #setting obs manually to max
+    wave_map[np.where(wave_map == 1)]=900  #setting obs manually to max
+    
     # if apply_scaling:
     #     wave_map =wave_map/wave_map.max()*200  # scalling
     return wave_map
@@ -227,7 +231,7 @@ def find_path(wave_map,q_start,q_goal,neighbours_num):
 
     return pathx,pathy
 
-####################################################3
+####################################################
 
 map_number = 3
 # Load grid map 
@@ -241,14 +245,12 @@ grid_map[grid_map <= 0.5] = 0
 # Invert colors to make 0 -> free and 1 -> occupied
 map = (grid_map * -1) + 1
 map = remove_edges(map)
-
-
-# Uncooment to plot map
 """"
 plt.matshow(map)
 plt.colorbar()
 plt.show()
 """
+
 if map_number == 0:
     # goal = (90, 70)
     goal = (110, 40)
@@ -321,7 +323,7 @@ plt.matshow(wave_map)
 plt.colorbar()
 plt.scatter(goal[1], goal[0], c="r",  marker=(5, 1))
 plt.savefig(f"wave_front{map_number}.png")
-# plt.show()
+plt.show()
 
 pathx,pathy = find_path(wave_map, start,goal, neighbours_num=4)
 plt.matshow(wave_map)
