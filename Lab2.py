@@ -1,3 +1,4 @@
+import os
 import numpy as np
 from matplotlib import pyplot as plt
 from PIL import Image
@@ -156,7 +157,7 @@ def get_gradient_descent(map, q_start, neighbours_num = 8):
     
     return gradient_listx, gradient_listy
 
-def wave_front(q_goal,apply_scaling=True,n_neighbours=4):
+def wave_front(q_goal,n_neighbours,apply_scaling=True):
     wave_map = copy.deepcopy(map).astype(float)
     value = 2
     wave_map[q_goal[0],q_goal[1]] = value
@@ -195,8 +196,12 @@ def find_path(wave_map,q_start,q_goal,neighbours_num):
 
     return pathx,pathy
 
-map_number = 3.0
+map_number = 0
+num_neigbours_used = 8
+Q_used = 50
+save_path = f"FINAL_RESULTS/map{map_number}"
 
+ 
 if map_number == 0:
     # goal = (90, 70)
     goal = (110, 40)
@@ -216,7 +221,6 @@ elif map_number == 3:
 # Load grid map 
 image = Image.open('data/map'+str(map_number)+'.png').convert('L')
 grid_map = np.array(image.getdata()).reshape(image.size[0], image.size[1])/255
-
 # binarize the image
 grid_map[grid_map > 0.5] = 1
 grid_map[grid_map <= 0.5] = 0
@@ -229,57 +233,73 @@ plt.matshow(map)
 plt.colorbar()
 plt.show()
 """
-
-dist_to_obstacle = bushfire(copy.deepcopy(map), 8)
+######################### PART 1 #################################
+dist_to_obstacle = bushfire(copy.deepcopy(map), neighbours_num=num_neigbours_used)
 """
 plt.matshow(dist_to_obstacle)
+plt.title(f"Bush-Fire Map {map_number}")
 plt.colorbar()
+plt.savefig(os.path.join(save_path,f"Bush-Fire_{map_number}_n_{num_neigbours_used}.png"))
 plt.show()
 """
 
-repulsive_grid = get_repulsive_function(dist_to_obstacle, Q = 5, eta = 15)
+repulsive_grid = get_repulsive_function(dist_to_obstacle, Q = Q_used, eta = 15)
 """
 plt.matshow(repulsive_grid)
+plt.title(f"Repulsive Grid {map_number}")
 plt.colorbar()
+plt.savefig(os.path.join(save_path,f"repulsive_grid{map_number}_n_{num_neigbours_used}.png"))
 plt.show()
 """
 
 atraction_grid = get_attraction_function(map, goal,distance = "d2")
 """
 plt.matshow(atraction_grid)
+plt.title(f"Atraction Grid {map_number}")
 plt.colorbar()
 plt.scatter(goal[1], goal[0], c="r",  marker=(5, 1))
+plt.savefig(os.path.join(save_path,f"atraction_grid_{map_number}_n_{num_neigbours_used}.png"))
 plt.show()
 """
 
 potential = atraction_grid + repulsive_grid
 """
 plt.matshow(potential)
+plt.title(f"Total Potential {map_number}")
 plt.colorbar()
 plt.scatter(goal[1], goal[0], c="r",  marker=(5, 1))
+plt.savefig(os.path.join(save_path,f"potential_{map_number}_n_{num_neigbours_used}.png"))
 plt.show()
 """
+######################### PART 2 #################################
 
-gradient_listx, gradient_listy = get_gradient_descent(potential, start, neighbours_num=4)
+gradient_listx, gradient_listy = get_gradient_descent(potential, start, neighbours_num=num_neigbours_used)
 """
 plt.matshow(potential)
+plt.title(f"Gradient Descent {map_number}")
 plt.colorbar()
 plt.scatter(gradient_listx, gradient_listy, s=2, marker = "*", c="b")
 plt.scatter(goal[1], goal[0], c="r",  marker=(5, 1))
+plt.savefig(os.path.join(save_path,f"gradient_{map_number}_n_{num_neigbours_used}_goal2.png"))
 plt.show()
 """
-
-wave_map = wave_front(goal,True)
+######################### PART 3 #################################
+wave_map = wave_front(goal,n_neighbours=num_neigbours_used,apply_scaling=True)
+"""
 plt.matshow(wave_map)
+plt.title(f"Wave Front {map_number}")
 plt.colorbar()
 plt.scatter(goal[1], goal[0], c="r",  marker=(5, 1))
-plt.savefig(f"wave_front{map_number}.png")
+plt.savefig(os.path.join(save_path,f"wave_map_{map_number}_n_{num_neigbours_used}.png"))
 plt.show()
-
-pathx,pathy = find_path(wave_map, start,goal, neighbours_num=4)
+"""
+pathx,pathy = find_path(wave_map, start,goal, neighbours_num=num_neigbours_used)
+"""
 plt.matshow(wave_map)
+plt.title(f"Path Finder {map_number}")
 plt.colorbar()
 plt.scatter(pathx, pathy, s=1, marker = "*", c="b")
 plt.scatter(goal[1], goal[0], c="r",  marker=(5, 1))
-plt.savefig(f"find_path_wave_front{map_number}.png")
+plt.savefig(os.path.join(save_path,f"path_finder_{map_number}_n{num_neigbours_used}.png"))
 plt.show()
+"""
