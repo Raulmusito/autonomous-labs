@@ -92,7 +92,7 @@ def bushfire (map, neighbours_num):
 
 def remove_edges (map, edge_size = 3):
     #   map: 2D n x m np.array from the map
-    #   edge_size = int 3 as default
+    #   edge_size = int 3 as default, should be of the size of the wall
 
     # return a 2d n x m np.array with the first and last edge_size columns and rows = 0
 
@@ -105,7 +105,7 @@ def remove_edges (map, edge_size = 3):
 
     return map
 
-def get_attraction_function(map, goal, z = 1, distance = "d2", apply_scaling = True, scale_factor = 10):
+def get_attraction_function(map, goal, z = 1, distance = "d2", apply_scaling = True, scale_factor = 10):        
     #   map: 2D n x m np.array from the map (to get the size of the output)
     #   z = int 1 as default attracction function multiplier
     #   distance = str type of function to calulate the atraction   
@@ -164,7 +164,7 @@ def get_gradient_descent(map, q_start, neighbours_num = 4):
 
     # return a 2 1D list with the x and y coordinates of the gradient descent path
 
-    E = .001 # breaking value
+    E = .000001 # breaking value
     y,x = q_start   # coordinates of the starting point
     #gradient_map = copy.deepcopy(map)
 
@@ -191,7 +191,7 @@ def get_gradient_descent(map, q_start, neighbours_num = 4):
         gradient_listy.append(y)
 
         # Break if stuck 
-        if c > 500:
+        if c > 100000:
             break
 
         c += 1
@@ -295,14 +295,13 @@ def smiley_map():
     return map
 
 # Choose a map 0-4
-map_number = 3
+map_number = 0
 
 # Assign goal and start coordinates for each map
 if map_number == 0:
-    goal = (90, 70)
-    #goal = (110, 40)
+    #goal = (50, 70)
+    goal = (110, 40)
     start = (10, 10)
-    # goal = (5,4) #for 10x10 grid
 elif map_number == 1:
     goal = (90, 60)
     start = (60, 60)
@@ -318,53 +317,59 @@ else:
 
 # Load grid map 
 if map_number <= 3:
-    image = Image.open('Lab2/data/map'+str(map_number)+'.png').convert('L')
+    image = Image.open('data/map'+str(map_number)+'.png').convert('L')
     grid_map = np.array(image.getdata()).reshape(image.size[0], image.size[1])/255
     # binarize the image
     grid_map[grid_map > 0.5] = 1
     grid_map[grid_map <= 0.5] = 0
     # Invert colors to make 0 -> free and 1 -> occupied
     map = (grid_map * -1) + 1   
-    #map = remove_edges(map)
+    map = remove_edges(map)
 
 else: 
     map = smiley_map()
 
 # Plot map
+"""
 plt.matshow(map)
 plt.colorbar()
 plt.show()
+"""
 
 
 dist_to_obstacle = bushfire(copy.deepcopy(map), 4)
+"""
 # Plot Distance to obstacle
 plt.matshow(dist_to_obstacle)
 plt.colorbar()
 plt.show()
+"""
 
-
-repulsive_grid = get_repulsive_function(dist_to_obstacle, Q = 5, eta = 15)
+repulsive_grid = get_repulsive_function(dist_to_obstacle, Q = 100, eta = 10)
 # Plot Repulsive grid
-plt.matshow(repulsive_grid)
+"""plt.matshow(repulsive_grid)
 plt.colorbar()
 plt.show()
+"""
 
-
-attraction_grid = get_attraction_function(map, goal,distance = "d2")
+attraction_grid = get_attraction_function(map, goal,distance = "d2", apply_scaling=True, scale_factor=10)
 # Plot Atractiong rid
+"""
 plt.matshow(attraction_grid)
 plt.colorbar()
 plt.scatter(goal[1], goal[0], c="r",  marker=(5, 1))
 plt.show()
+"""
 
 
 potential = attraction_grid + repulsive_grid
+"""
 # Plot Full Potential grid
 plt.matshow(potential)
 plt.colorbar()
 plt.scatter(goal[1], goal[0], c="r",  marker=(5, 1))
 plt.show()
-
+"""
 
 gradient_listx, gradient_listy = get_gradient_descent(potential, start, neighbours_num=4)
 # Plot potential map with the path of the gradient
@@ -374,8 +379,15 @@ plt.scatter(gradient_listx, gradient_listy, s=2, marker = "*", c="b")
 plt.scatter(goal[1], goal[0], c="r",  marker=(5, 1))
 plt.show()
 
-
-wave_map = wave_front(goal,True)
+gradient_listx, gradient_listy = get_gradient_descent(potential, start, neighbours_num=8)
+# Plot potential map with the path of the gradient
+plt.matshow(potential)
+plt.colorbar()
+plt.scatter(gradient_listx, gradient_listy, s=2, marker = "*", c="b")
+plt.scatter(goal[1], goal[0], c="r",  marker=(5, 1))
+plt.show()
+"""
+wave_map = wave_front(goal,True, n_neighbours=8)
 # Plot the wave map
 plt.matshow(wave_map)
 plt.colorbar()
@@ -383,7 +395,7 @@ plt.scatter(goal[1], goal[0], c="r",  marker=(5, 1))
 #plt.savefig(f"wave_front{map_number}.png")
 plt.show()
 
-pathx,pathy = find_path(wave_map, start,goal, neighbours_num=4)
+pathx,pathy = find_path(wave_map, start,goal, neighbours_num=8)
 # Plot Wave map with the path from the start to the goal 
 plt.matshow(wave_map)
 plt.colorbar()
@@ -391,3 +403,4 @@ plt.scatter(pathx, pathy, s=1, marker = "*", c="b")
 plt.scatter(goal[1], goal[0], c="r",  marker=(5, 1))
 #plt.savefig(f"find_path_wave_front{map_number}.png")
 plt.show()
+"""
