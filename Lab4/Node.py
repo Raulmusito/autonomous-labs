@@ -76,3 +76,12 @@ class Point:
         dist = nearest.dist(pnt_vec)
         nearest = nearest.add(s.p1)
         return dist
+
+class Node(Point):
+    def __init__(self, x,  y):
+        super().__init__(x, y)
+        self.parent = None
+        self.coord = (x, y)
+        self.g = 0 # cost of getting to the node from the start 
+
+    

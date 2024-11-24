@@ -1,20 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from PIL import Image
 import random
-from Point import Point
-from Plot import Plot
-class Node:
-    def __init__(self, position):
-        self.position = position
-        self.point= Point(position[0],position[1])
-        self.parent = None
-        self.cost = 0
+from Node import Node
 
 class RRT:
     def __init__(self, start, goal,goal_threshold, map, max_iter=1000, step_size=1, search_radius=100):
-        self.start = Node(start)
-        self.goal = Node(goal)
+        self.start = start
+        self.goal = goal
         self.map = map 
         self.max_iter = max_iter
         self.step_size = step_size
@@ -24,7 +16,7 @@ class RRT:
         self.Cost = np.full(map.shape, np.inf)
 
     def distance(self, node1, node2):
-        return np.linalg.norm(np.array(node1.position) - np.array(node2))
+        return np.linalg.norm(node1.numpy() - node2.numpy())
 
 
     def check_line_collision(self, start, end):  ##BresenhamLine
@@ -59,7 +51,6 @@ class RRT:
             else:
                 collision = True
                 break
-
             
         return collision, pixels
     
@@ -69,20 +60,20 @@ class RRT:
         plt.scatter(path[1], path[0], s=50, marker=".", c=color)
         if show:
             plt.scatter(random_node[1], random_node[0], c="w",s=30, marker="o")
-            plt.scatter(self.goal.position[1], self.goal.position[0], c="r", marker=(5, 1))
-            plt.scatter(self.start.position[1], self.start.position[0], s=50, marker="^", c="y")
+            plt.scatter(self.goal.y, self.goal.x, c="r", marker=(5, 1))
+            plt.scatter(self.start.y, self.start.x, s=50, marker="^", c="y")
             plt.colorbar()
             plt.show()
         
 
     def get_random_node(self,p):
         if random.random() < p:
-            return goal
+            return self.goal
         # Get all free cells (where grid is 0)
-        free_positions = np.argwhere(grid == 0)
+        free_positions = np.argwhere(self.map == 0)
         # Randomly choose one of the free cells
         random_index = np.random.choice(len(free_positions))
-        return tuple(free_positions[random_index])
+        return Node(free_positions[random_index])
 
     def nearest_node(self, random_node):
         return min(self.tree, key=lambda node: self.distance(node, random_node))
@@ -92,7 +83,8 @@ class RRT:
         return collision
     
     def rrt_star(self):
-        self.Cost[self.start.position] = 0  # Initialize cost of start node
+        #self.Cost[self.start.position] = 0  # Initialize cost of start node
+        self.start.g = 0
         nodes = []
         
         for _ in range(self.max_iter):
@@ -137,13 +129,13 @@ class RRT:
                 
         return self.tree, self.get_edges()  # Return the final tree and edges 
 
- 
+
     def steer(self, from_node, to_node):
-        vector = np.array(to_node) - np.array(from_node)
+        vector = to_node.numpy() - from_node.numpy()
         length = np.linalg.norm(vector)
         vector = vector / length * min(self.step_size, length)
         new_position = np.array(from_node) + vector
-        return tuple(self.map(new_position))
+        return Node(new_position)
 
     def find_nearby_nodes(self, node):
         return [n for n in self.tree if self.distance(n, node) < self.search_radius]
@@ -175,71 +167,19 @@ class RRT:
         return edges
 
 
+    def rrt(self):
+        self.start.g = 0
+        for k in range(self.max_iter):
+            random_node = self.get_random_node(0.2)
+            nearest = self.nearest_node(random_node)
+            new_node = self.steer(nearest, random_node)
 
-import numpy as np
-import math
-from matplotlib import pyplot as plt
-from PIL import Image
-
-from Point import Point
-
-# Load grid map
-image = Image.open("map0.png").convert("L")
-grid_map = np.array(image.getdata()).reshape(image.size[0], image.size[1]) / 255
-# binarize the image
-grid_map[grid_map > 0.5] = 1
-grid_map[grid_map <= 0.5] = 0
-# Invert colors to make 0 -> free and 1 -> occupied
-grid_map = (grid_map * -1) + 1
-# Show grid map
-plt.matshow(grid_map)
-plt.colorbar()
-plt.show()
-
-
-
-
-def load_and_process_map(map_number):
-    """
-    Loads and processes the map image for a given map number.
-    
-    Args:
-        map_number (int): The number of the map file to load (e.g., 'map0.png').
-    
-    Returns:
-        np.ndarray: A processed grid map where 0 represents free cells and 1 represents obstacles.
-        None: If the map file is not found.
-    """
-    try:
-        # Load the image
-        image = Image.open(f'map{map_number}.png').convert('L')
-    except FileNotFoundError:
-        print(f"Map file 'map{map_number}.png' not found.")
-        return None
-
-    # Convert image to numpy array and normalize
-    grid_map = np.array(image.getdata()).reshape(image.size[0], image.size[1]) / 255
-
-    # Binarize the grid map
-    grid_map[grid_map > 0.5] = 1
-    grid_map[grid_map <= 0.5] = 0
-
-    # Invert the grid to make 0 -> free and 1 -> occupied
-    grid = (grid_map * -1) + 1
-
-    return grid
-
-if __name__ == "__main__":
-    start = (10, 10)
-    goal = (90, 70)
-    map_number = 0
-    # map_dims = (100, 100)
-    # obstacle_list = [(20, 20), (30, 30), (40, 40)]  # Example obstacles
-    grid = load_and_process_map(map_number)
-    # Plot the map
-    # plt.matshow(grid, origin='upper')
-    # plt.colorbar()
-    # plt.show()
-    rrt = RRT(start=start, goal=goal,goal_threshold=2,map=grid,max_iter=1000,step_size=10, search_radius=5)
-    nodes,edges = rrt.rrt_star()
-    Plot.plot(grid, nodes, edges, [])
+            if  self.is_collision2(nearest, new_node) == False:
+                neighbors = self.find_nearby_nodes(new_node)
+                parent, cost = self.select_parent(neighbors, nearest, new_node)
+                new_node.parent = parent
+                new_node.cost = cost
+                self.rewire(neighbors, new_node)
+                self.tree.append(new_node)
+                if self.distance(new_node, self.goal.position) <= self.goal_threshold:
+                    return self.fill_path()
