@@ -9,7 +9,7 @@ class Map():
         self.map_number = map_number
         self.grid = self.load_and_process_map()
         self.shape = self.grid.shape
-
+        
 
     def load_and_process_map(self):
         """
@@ -23,8 +23,8 @@ class Map():
             None: If the map file is not found.
         """
         try:
-            # Load the image
-            image = Image.open(f"Lab4/maps/map{self.map_number}.png").convert('L')
+            # Load the image maps
+            image = Image.open(f"maps/map{self.map_number}.png").convert('L')
         except FileNotFoundError:
             print(f"Map file 'map{self.map_number}.png' not found.")
             return None
@@ -41,20 +41,20 @@ class Map():
 
         return grid
     
-    def plot(self, states=[], edges=[], path=[]):
+    def plot(self, goal,goal_threshold,states=[], edges=[], path=[]):
         plt.figure(figsize=(10, 10))
         plt.matshow(self.grid, fignum=0)
 
         if len(states) > 0:
             for i,v in enumerate(states):
                 
-                plt.plot(v.position[1], v.position[0], "+w")
-                plt.text(v.position[1], v.position[0], i, fontsize=14, color="w")
+                plt.plot(v.coord[1], v.coord[0], "+w")
+                # plt.text(v.coord[1], v.coord[0], i, fontsize=14, color="w")
 
             for e in edges:
                 plt.plot(
-                    [states[e[0]].position[1], states[e[1]].position[1]],
-                    [states[e[0]].position[0], states[e[1]].position[0]],
+                    [states[e[0]].coord[1], states[e[1]].coord[1]],
+                    [states[e[0]].coord[0], states[e[1]].coord[0]],
                     "--g",
                 )
 
@@ -65,11 +65,12 @@ class Map():
                     "r",
                 )
             # Start
-            plt.plot(states[0].position[1], states[0].position[0], marker="^", c="y")
+            plt.plot(states[0].coord[1], states[0].coord[0], marker="^", c="y")
             # Goal
-            plt.plot(states[-1].position[1], states[-1].position[0], c="r", marker=(5, 1))
-
+            plt.plot(states[-1].coord[1], states[-1].coord[0], c="r", marker=(5, 1))
+            plt.plot(goal[1], goal[0], c="r", marker='o', markersize=2*3.14*1.7*goal_threshold , alpha=0.3)
         path = []
+
         plt.show()
 
     def fill_path(vertices, edges):

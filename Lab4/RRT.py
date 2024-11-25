@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import random
 from Node import Node
+import math 
 
 class RRT:
     def __init__(self, start, goal,goal_threshold, map, max_iter=1000, step_size=1, search_radius=100):
@@ -16,47 +17,33 @@ class RRT:
         self.Cost = np.full(map.shape, np.inf)
 
     def distance(self, node1, node2):
-        return np.linalg.norm(node1.numpy() - node2.numpy())
+        return math.sqrt((node2.coord[0] - node1.coord[0])**2 + (node2.coord[1] - node1.coord[1])**2)
 
+    def get_pixels_between_points(self,point1, point2):
 
-    def check_line_collision(self, start, end):  ##BresenhamLine
-        pixels = []
-        collision = False
-        x1, y1 = start
-        x2, y2 = end
-        dx = abs(x2 - x1)
-        dy = abs(y2 - y1)
-        sx = self.step_size if x1 < x2 else -self.step_size
-        sy = self.step_size if y1 < y2 else -self.step_size
-        err = dx - dy
+        num_steps = max(abs(point2[0] - point1[0]), abs(point2[1] - point1[1])) + 1
 
-        while True:
-            # Ensure coordinates are within map bounds
-            if 0 <= x1 <= np.shape(self.map)[1] and 0 <= y1 <= np.shape(self.map)[0]:
-                if self.map[x1,y1] == 0:
-                    pixels.append((x1, y1))
-                    if x1 == x2 and y1 == y2:
-                        break
-                    e2 = 2 * err
-                    if e2 > -dy:
-                        err -= dy
-                        x1 += sx
-                    if e2 < dx:
-                        err += dx
-                        y1 += sy
-                else:
-                    collision = True
-                    return collision, pixels
+        # Interpolate x and y coordinates
+        x_values = np.linspace(point1[0], point2[0], num_steps)
+        y_values = np.linspace(point1[1], point2[1], num_steps)
 
-            else:
-                collision = True
-                break
-            
-        return collision, pixels
+        # Combine x and y into pixel coordinates
+        pixels = list(zip(np.round(x_values).astype(int), np.round(y_values).astype(int)))
+        q_nodes = []
+        for i,p in enumerate(pixels):
+            if self.map.grid[p]!=0:
+                del pixels[i:]
+                return q_nodes
+            if(i+1)% self.step_size==0:
+                q_nodes.append(p)
+        if q_nodes:
+            # self.draw_path(q_nodes,point2,color='b',show=True)
+            print(q_nodes)
+        return q_nodes
     
     def draw_path(self,path,random_node,color='b',show=False):
         path = list(zip(*path))
-        plt.matshow(self.map, origin='upper')
+        plt.matshow(self.map.grid, origin='upper')
         plt.scatter(path[1], path[0], s=50, marker=".", c=color)
         if show:
             plt.scatter(random_node[1], random_node[0], c="w",s=30, marker="o")
@@ -70,20 +57,16 @@ class RRT:
         if random.random() < p:
             return self.goal
         # Get all free cells (where grid is 0)
-        free_positions = np.argwhere(self.map == 0)
+        free_positions = np.argwhere(self.map.grid == 0)
         # Randomly choose one of the free cells
         random_index = np.random.choice(len(free_positions))
-        return Node(free_positions[random_index])
+        return Node(free_positions[random_index][0],free_positions[random_index][1])
 
     def nearest_node(self, random_node):
         return min(self.tree, key=lambda node: self.distance(node, random_node))
     
-    def is_collision(self, node1, node2):
-        collision, _ = self.check_line_collision(node1, node2.position)
-        return collision
-    
     def rrt_star(self):
-        #self.Cost[self.start.position] = 0  # Initialize cost of start node
+        self.Cost[self.start.coord] = 0  # Initialize cost of start node
         self.start.g = 0
         nodes = []
         
@@ -96,46 +79,34 @@ class RRT:
             nearest = self.nearest_node(random_node)
             
             # 3. Steer towards the random node and check for collision
-            collision, path = self.check_line_collision(nearest.position, random_node)
-            # if collision:
-            #     continue  # Skip this iteration if there's an obstacle
-            # self.draw_path(path, random_node,color='r', show=True)
-            # 4. Add new nodes from the valid path
-            for n in path[1:]:
-                new_node = Node(n)
-                new_node.parent = nearest
-                self.Cost[new_node.position] = self.Cost[new_node.parent.position] + self.step_size
-                print('Streak:', new_node.position, len(path) - 1)
-                
-                # Update nearest to the newly added node
-                nearest = new_node
-                # self.tree.append(new_node)
-                nodes.append(n)
-                new_cost = self.Cost[nearest.position] + self.distance(nearest, new_node.position)
+            path = self.get_pixels_between_points(nearest.coord, random_node.coord)
             
-                if new_node.position not in self.Cost or new_cost < self.Cost[new_node.position]:
-                    self.Cost[new_node.position] = new_cost
-                    print('Node added:', new_node.position, 'Cost:', self.Cost[new_node.position])
+            for n in path:
+                new_node = Node(n[0],n[1])
+                new_node.parent = nearest
+                self.Cost[new_node.coord] = self.Cost[new_node.parent.coord] + self.step_size
+                # print('Streak:', new_node.coord, len(path) - 1)
+                 
+                new_cost = self.Cost[nearest.coord] + self.distance(nearest, new_node)
+            
+                if new_node.coord not in self.Cost or new_cost < self.Cost[new_node.coord]:
+                    self.Cost[new_node.coord] = new_cost
+                    print('Node added:', new_node.coord, 'Cost:', self.Cost[new_node.coord])
                     
                     # Update nearest to the newly added node
                     nearest = new_node
                     self.tree.append(new_node)
-                    nodes.append(n)
+                    nodes.append(new_node.coord) 
+                print("Dist b/w curr node and goal:",self.distance(new_node, self.goal) )
                 # 5. Check if goal is reached
-                if self.distance(new_node, self.goal.position) <= self.goal_threshold:
+                if self.distance(new_node, self.goal) <= self.goal_threshold:
                     print("Goal reached")
                     return self.tree, self.get_edges()
-                    # self.draw_path(nodes,random_node, color='g', show=True)
                 
-        return self.tree, self.get_edges()  # Return the final tree and edges 
+        return self.tree, self.get_edges()
 
 
-    def steer(self, from_node, to_node):
-        vector = to_node.numpy() - from_node.numpy()
-        length = np.linalg.norm(vector)
-        vector = vector / length * min(self.step_size, length)
-        new_position = np.array(from_node) + vector
-        return Node(new_position)
+     
 
     def find_nearby_nodes(self, node):
         return [n for n in self.tree if self.distance(n, node) < self.search_radius]
