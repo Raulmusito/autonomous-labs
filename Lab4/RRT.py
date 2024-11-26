@@ -105,9 +105,10 @@ class RRT:
                 
         return self.tree, self.get_edges()
 
-
+    def is_collision(self, node1, node2):
+        collision, _ = self.check_line_collision(node1, node2.position)
+        return collision
      
-
     def find_nearby_nodes(self, node):
         return [n for n in self.tree if self.distance(n, node) < self.search_radius]
 
