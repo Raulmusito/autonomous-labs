@@ -19,8 +19,9 @@ class RRT:
     def distance(self, node1, node2):
         return math.sqrt((node2.coord[0] - node1.coord[0])**2 + (node2.coord[1] - node1.coord[1])**2)
 
-    def get_pixels_between_points(self,point1, point2):
+    def get_pixels_between_points(self,point1, point2): ##accepts coords
 
+        collision = False
         num_steps = max(abs(point2[0] - point1[0]), abs(point2[1] - point1[1])) + 1
 
         # Interpolate x and y coordinates
@@ -32,14 +33,13 @@ class RRT:
         q_nodes = []
         for i,p in enumerate(pixels):
             if self.map.grid[p]!=0:
+                collision= True
                 del pixels[i:]
-                return q_nodes
+                return collision,q_nodes
             if(i+1)% self.step_size==0:
                 q_nodes.append(p)
-        if q_nodes:
-            # self.draw_path(q_nodes,point2,color='b',show=True)
-            print(q_nodes)
-        return q_nodes
+
+        return collision,q_nodes
     
     def draw_path(self,path,random_node,color='b',show=False):
         path = list(zip(*path))
@@ -65,52 +65,52 @@ class RRT:
     def nearest_node(self, random_node):
         return min(self.tree, key=lambda node: self.distance(node, random_node))
     
-    def rrt_star(self):
+    def find_nearby_nodes(self, node):
+        return [n for n in self.tree if self.distance(n, node) < self.search_radius]
+    
+    def is_collision(self, node1, node2):
+        collision, _ = self.get_pixels_between_points(node1, node2)
+        return collision
+    
+
+
+    def rrt_star(self,smooth_path=False):
         self.Cost[self.start.coord] = 0  # Initialize cost of start node
         self.start.g = 0
         nodes = []
         
         for _ in range(self.max_iter):
             # 1. Sample a random node
-            random_node = self.get_random_node(0.2)
-            print('Random node:', random_node)
-            
+            random_node = self.get_random_node(0.2) 
+
             # 2. Find the nearest node in the tree
             nearest = self.nearest_node(random_node)
             
             # 3. Steer towards the random node and check for collision
-            path = self.get_pixels_between_points(nearest.coord, random_node.coord)
+            _,path = self.get_pixels_between_points(nearest.coord, random_node.coord)
             
             for n in path:
                 new_node = Node(n[0],n[1])
                 new_node.parent = nearest
+
                 self.Cost[new_node.coord] = self.Cost[new_node.parent.coord] + self.step_size
-                # print('Streak:', new_node.coord, len(path) - 1)
-                 
                 new_cost = self.Cost[nearest.coord] + self.distance(nearest, new_node)
             
                 if new_node.coord not in self.Cost or new_cost < self.Cost[new_node.coord]:
                     self.Cost[new_node.coord] = new_cost
-                    print('Node added:', new_node.coord, 'Cost:', self.Cost[new_node.coord])
-                    
+
                     # Update nearest to the newly added node
                     nearest = new_node
                     self.tree.append(new_node)
                     nodes.append(new_node.coord) 
-                print("Dist b/w curr node and goal:",self.distance(new_node, self.goal) )
+
                 # 5. Check if goal is reached
                 if self.distance(new_node, self.goal) <= self.goal_threshold:
                     print("Goal reached")
-                    return self.tree, self.get_edges()
-                
-        return self.tree, self.get_edges()
+                    return self.tree, self.get_edges(self.tree)
+         
+        raise AssertionError("Path not found\n")
 
-    def is_collision(self, node1, node2):
-        collision, _ = self.check_line_collision(node1, node2.position)
-        return collision
-     
-    def find_nearby_nodes(self, node):
-        return [n for n in self.tree if self.distance(n, node) < self.search_radius]
 
     def select_parent(self, neighbors, nearest, new_node):
         parent = nearest
@@ -131,11 +131,11 @@ class RRT:
                     n.parent = new_node
                     n.cost = cost
 
-    def get_edges(self):
+    def get_edges(self,nodes):
         edges = []
-        for node in self.tree:
+        for node in nodes:
             if node.parent:
-                edges.append((self.tree.index(node.parent), self.tree.index(node)))
+                edges.append((nodes.index(node.parent), nodes.index(node)))
         return edges
 
 

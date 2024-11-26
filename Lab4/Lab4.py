@@ -25,8 +25,13 @@ if __name__ == "__main__":
         start = Node(50, 90)
      
     grid = Map(map_number)
-
     goal_threshold = 10
-    rrt = RRT(start=start, goal=goal,map=grid,max_iter=100000,step_size=15,goal_threshold=goal_threshold,search_radius=20)
-    nodes,edges = rrt.rrt_star()
-    grid.plot(states=nodes,edges=edges,goal=goal.coord,goal_threshold=goal_threshold)
+
+    rrt = RRT(start=start, goal=goal,map=grid,goal_threshold=goal_threshold,
+              max_iter=1000,step_size=5,search_radius=20)
+    try:
+        nodes,edges = rrt.rrt_star()
+        _,_,path=grid.fill_path(nodes, edges)
+        grid.plot(states=nodes,edges=edges,path=path,goal=goal.coord,goal_threshold=goal_threshold)
+    except AssertionError as e:
+        print(e)

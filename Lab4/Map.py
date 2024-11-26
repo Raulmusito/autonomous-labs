@@ -73,7 +73,7 @@ class Map():
 
         plt.show()
 
-    def fill_path(vertices, edges):
+    def fill_path(self,vertices, edges):
         edges.reverse()
         path = [edges[0][1]]
         next_v = edges[0][0]
