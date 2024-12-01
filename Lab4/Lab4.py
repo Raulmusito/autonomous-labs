@@ -7,7 +7,7 @@ if __name__ == "__main__":
     
 
     # Choose a map 0-3
-    map_number = 3
+    map_number = 0
 
     # Assign goal and start coordinates for each map
     if map_number == 0:
@@ -25,12 +25,12 @@ if __name__ == "__main__":
         start = Node(50, 90)
      
     grid = Map(map_number)
-    goal_threshold = 10
+    goal_threshold = 5
 
     rrt = RRT(start=start, goal=goal,map=grid,goal_threshold=goal_threshold,
-              max_iter=1000,step_size=5,search_radius=20)
+              max_iter=1000,step_size=10,search_radius=20)
     try:
-        nodes,edges = rrt.rrt_star()
+        nodes,edges = rrt.rrt()
         _,_,path=grid.fill_path(nodes, edges)
         grid.plot(states=nodes,edges=edges,path=path,goal=goal.coord,goal_threshold=goal_threshold)
     except AssertionError as e:

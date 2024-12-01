@@ -73,7 +73,6 @@ class RRT:
         return collision
     
 
-
     def rrt_star(self,smooth_path=False):
         self.Cost[self.start.coord] = 0  # Initialize cost of start node
         self.start.g = 0
@@ -138,20 +137,51 @@ class RRT:
                 edges.append((nodes.index(node.parent), nodes.index(node)))
         return edges
 
+    def new_config(self, nearest, random_node, step_size):
+        distance = self.distance(nearest, random_node)
+        if distance <= step_size:
+            return random_node
+        else:
+            theta = math.atan2(random_node.coord[0] - nearest.coord[0], random_node.coord[1] - nearest.coord[1])
+            return Node(int(nearest.coord[0] + step_size * math.cos(theta)), int(nearest.coord[1] + step_size * math.sin(theta)))
+
+    def collision_free(self, point1, point2):
+        num_steps = max(abs(point2[0] - point1[0]), abs(point2[1] - point1[1])) + 1
+        # Interpolate x and y coordinates
+        x_values = np.linspace(point1[0], point2[0], num_steps)
+        y_values = np.linspace(point1[1], point2[1], num_steps)
+
+        # Combine x and y into pixel coordinates
+        pixels = list(zip(np.round(x_values).astype(int), np.round(y_values).astype(int)))
+        q_nodes = []
+        for i,p in enumerate(pixels):
+            if self.map.grid[p]!=0:
+                return False
+        return True
 
     def rrt(self):
-        self.start.g = 0
         for k in range(self.max_iter):
-            random_node = self.get_random_node(0.2)
-            nearest = self.nearest_node(random_node)
-            new_node = self.steer(nearest, random_node)
+            # 1. Sample a random node
+            random_node = self.get_random_node(0.2) 
 
-            if  self.is_collision2(nearest, new_node) == False:
-                neighbors = self.find_nearby_nodes(new_node)
-                parent, cost = self.select_parent(neighbors, nearest, new_node)
-                new_node.parent = parent
-                new_node.cost = cost
-                self.rewire(neighbors, new_node)
-                self.tree.append(new_node)
-                if self.distance(new_node, self.goal.position) <= self.goal_threshold:
-                    return self.fill_path()
+            # 2. Find the nearest node in the tree
+            nearest = self.nearest_node(random_node)
+            
+            # 3. New configuration
+            qnew = self.new_config(nearest, random_node, self.step_size)
+
+            if self.collision_free((nearest.x,nearest.y), (qnew.x,qnew.y)):
+                qnew.parent = nearest
+                # 5. Check if goal is reached
+                self.tree.append(qnew)
+                
+                if self.distance(qnew, self.goal) <= self.goal_threshold:
+                    print(f"Goal reached in {k} iterations")
+                    return self.tree, self.get_edges(self.tree)
+            
+            """print("Goal reached")
+                    last = qnew
+                    while last != self.goal:
+                        nodes.append(last)
+                        last = last.parent
+                    nodes.append(last) """

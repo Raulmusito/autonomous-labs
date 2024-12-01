@@ -23,8 +23,8 @@ class Map():
             None: If the map file is not found.
         """
         try:
-            # Load the image maps
-            image = Image.open(f"maps/map{self.map_number}.png").convert('L')
+            # Load the image maps Lab4/maps/map3.png
+            image = Image.open(f"Lab4/maps/map{self.map_number}.png").convert('L')
         except FileNotFoundError:
             print(f"Map file 'map{self.map_number}.png' not found.")
             return None

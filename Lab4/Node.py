@@ -84,4 +84,8 @@ class Node(Point):
         self.coord = (x, y)
         self.g = 0 # cost of getting to the node from the start 
 
+    def __eq__(self, node):
+        return self.x == node.x and self.y == node.y
+
+
     
