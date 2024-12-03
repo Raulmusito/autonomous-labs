@@ -24,7 +24,7 @@ class Map():
         """
         try:
             # Load the image maps Lab4/maps/map3.png
-            image = Image.open(f"Lab4/maps/map{self.map_number}.png").convert('L')
+            image = Image.open(f"maps/map{self.map_number}.png").convert('L')
         except FileNotFoundError:
             print(f"Map file 'map{self.map_number}.png' not found.")
             return None

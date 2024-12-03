@@ -19,8 +19,7 @@ class RRT:
     def distance(self, node1, node2):
         return math.sqrt((node2.coord[0] - node1.coord[0])**2 + (node2.coord[1] - node1.coord[1])**2)
 
-    def get_pixels_between_points(self,point1, point2): ##accepts coords
-
+    def get_pixels_between_points(self, point1, point2):  # Accepts coords
         collision = False
         num_steps = max(abs(point2[0] - point1[0]), abs(point2[1] - point1[1])) + 1
 
@@ -31,27 +30,22 @@ class RRT:
         # Combine x and y into pixel coordinates
         pixels = list(zip(np.round(x_values).astype(int), np.round(y_values).astype(int)))
         q_nodes = []
-        for i,p in enumerate(pixels):
-            if self.map.grid[p]!=0:
-                collision= True
+
+        for i, p in enumerate(pixels):
+            if 0 <= p[0] < self.map.grid.shape[0] and 0 <= p[1] < self.map.grid.shape[1]:
+                if self.map.grid[p] != 0:
+                    collision = True
+                    del pixels[i:]
+                    return collision, q_nodes
+            else:
+                collision = True  # Out-of-bounds considered as collision
                 del pixels[i:]
-                return collision,q_nodes
-            if(i+1)% self.step_size==0:
+                return collision, q_nodes
+
+            if (i + 1) % self.step_size == 0:
                 q_nodes.append(p)
 
-        return collision,q_nodes
-    
-    def draw_path(self,path,random_node,color='b',show=False):
-        path = list(zip(*path))
-        plt.matshow(self.map.grid, origin='upper')
-        plt.scatter(path[1], path[0], s=50, marker=".", c=color)
-        if show:
-            plt.scatter(random_node[1], random_node[0], c="w",s=30, marker="o")
-            plt.scatter(self.goal.y, self.goal.x, c="r", marker=(5, 1))
-            plt.scatter(self.start.y, self.start.x, s=50, marker="^", c="y")
-            plt.colorbar()
-            plt.show()
-        
+        return collision, q_nodes
 
     def get_random_node(self,p):
         if random.random() < p:
@@ -83,23 +77,47 @@ class RRT:
                 # self.map.plot(states=self.tree,edges=self.get_edges(self.tree),path=[],goal=self.goal.coord,goal_threshold=self.goal_threshold)
                 return self.tree, self.get_edges(self.tree)
         return None, None
-########################################Testing#####################################################
-    # def cost_optim(self,path,random_node):
-    #     for n in path:
-    #         new_node = Node(n[0],n[1]) 
-    #         nearest = self.nearest_node(random_node)
-    #         new_node.parent = nearest
-    #         self.tree.append(new_node)
-    #         if self.distance(new_node, self.goal) <= self.goal_threshold:
-    #             print("Goal reached")
-    #             # self.map.plot(states=self.tree,edges=self.get_edges(self.tree),path=[],goal=self.goal.coord,goal_threshold=self.goal_threshold)
-    #             return self.tree, self.get_edges(self.tree)
-    #     return None, None
-########################################Testing#####################################################
+    
     def cost_optim(self):
-        """
-        Optimized RRT* implementation for cost minimization.
-        """
+        
+        self.Cost[self.start.coord] = 0   
+        self.start.g = 0  
+        for _ in range(self.max_iter):
+            # Sample a random node
+            random_node = self.get_random_node(0.2)
+
+            # Find the nearest node in the tree
+            nearest = self.nearest_node(random_node)
+
+            # Steer towards the random node and check for collision
+            qnew = self.new_config(nearest, random_node, self.step_size)
+            collision, _ = self.get_pixels_between_points(qnew.coord, nearest.coord)
+            if collision:
+                continue  # Skip if the path is not collision-free
+
+            # Initialize the cost of the new node
+            qnew.g = nearest.g + self.distance(nearest, qnew)
+            qnew.parent = nearest
+
+            # Check for a better parent (cost optimization)
+            for node in self.tree:
+                if node is not qnew.parent and self.distance(node, qnew) <= self.step_size:
+                    collision, _ = self.get_pixels_between_points(node.coord, qnew.coord)
+                    if not collision and node.g + self.distance(node, qnew) < qnew.g:
+                        qnew.g = node.g + self.distance(node, qnew)
+                        qnew.parent = node
+
+            # Add the new node to the tree
+            self.tree.append(qnew)
+
+            # Check if the goal is reached
+            if self.distance(qnew, self.goal) <= self.goal_threshold:
+                print("Goal reached")
+                return self.tree, self.get_edges(self.tree)
+
+        raise AssertionError("Path not found\n")
+
+    def rewire(self):
         self.Cost[self.start.coord] = 0  # Set cost of the start node to 0
         self.start.g = 0  # Initialize g value for the start node
 
@@ -111,52 +129,43 @@ class RRT:
             nearest = self.nearest_node(random_node)
 
             # 3. Steer towards the random node and check for collision
-            collision, path = self.get_pixels_between_points(nearest.coord, random_node.coord)
+            qnew = self.new_config(nearest, random_node, self.step_size)
+            collision, _ = self.get_pixels_between_points(qnew.coord, nearest.coord)
             if collision:
                 continue  # Skip if the path is not collision-free
 
-            for n in path:
-                new_node = Node(n[0], n[1])
-                nearest = self.nearest_node(random_node)
-                new_node.parent = nearest
-                # Compute the cost of reaching the new node
-                new_cost = self.Cost[nearest.coord] + self.distance(nearest, new_node)
+            # 4. Initialize the cost of the new node
+            qnew.g = nearest.g + self.distance(nearest, qnew)
+            qnew.parent = nearest
 
-                # Update if this path is better
-                if new_node.coord not in self.Cost or new_cost < self.Cost[new_node.coord]:
-                    self.Cost[new_node.coord] = new_cost
-                    self.tree.append(new_node)
-                    # self.map.plot(states=self.tree,edges=self.get_edges(self.tree),path=[],goal=self.goal.coord,goal_threshold=self.goal_threshold)
-                    
-                    # 4. Check if the goal is reached
-                    if self.distance(new_node, self.goal) <= self.goal_threshold:
-                        print("Goal reached")
-                        return self.tree, self.get_edges(self.tree)
-                    # 5. Rewire the tree self
-                    self.rewire(new_node)
-                    # self.map.plot(states=self.tree,edges=self.get_edges(self.tree),path=[],goal=self.goal.coord,goal_threshold=self.goal_threshold)
-                    
+            # 5. Check for a better parent (cost optimization)
+            for node in self.tree:
+                if node is not qnew.parent and self.distance(node, qnew) <= self.step_size:
+                    collision, _ = self.get_pixels_between_points(node.coord, qnew.coord)
+                    if not collision and node.g + self.distance(node, qnew) < qnew.g:
+                        qnew.g = node.g + self.distance(node, qnew)
+                        qnew.parent = node
+
+            # 6. Add the new node to the tree
+            self.tree.append(qnew)
+
+            # 7. Rewire the tree to ensure optimality
+         
+            for node in self.tree:
+                if node is not qnew and self.distance(node, qnew) <= self.step_size:
+                    collision, _ = self.get_pixels_between_points(qnew.coord, node.coord)
+                    if not collision and qnew.g + self.distance(qnew, node) < node.g:
+                        node.g = qnew.g + self.distance(qnew, node)
+                        qnew.parent = node
+                        # del self.tree[-1]
+                        self.tree.append(qnew)
+             
+            # 8. Check if the goal is reached
+            if self.distance(qnew, self.goal) <= self.goal_threshold:
+                print("Goal reached")
+                return self.tree, self.get_edges(self.tree)
+
         raise AssertionError("Path not found\n")
-
-    def rewire(self, new_node):
-        """
-        Rewire the tree to minimize the cost of the path to each node.
-        After adding a new node, check if any nearby nodes can be connected to it 
-        to provide a lower-cost path.
-        """
-        neighbors = self.find_nearby_nodes(new_node)
-
-        for nearby_node in neighbors:
-            # Check if the path is collision-free
-            if not self.is_collision(new_node.coord, nearby_node.coord):
-                # Calculate the new cost to reach the nearby node through the new node
-                new_cost = self.Cost[new_node.coord] + self.distance(new_node, nearby_node)
-
-                # Check if the new cost is better
-                if new_cost < self.Cost[nearby_node.coord]:
-                    # Update the parent of the nearby node
-                    self.Cost[nearby_node.coord] = new_cost
-                    nearby_node.parent = new_node
 
     def rrt_star(self,node_expansion=False,cost_optim=False,rewire=False):
         self.Cost[self.start.coord] = 0  # Initialize cost of start node
@@ -171,20 +180,19 @@ class RRT:
                 return node,edges
             
         for _ in range(self.max_iter):
-            # 1. Sample a random node
+            # Sample a random node
             random_node = self.get_random_node(0.2) 
 
-            # 2. Find the nearest node in the tree
+            #Find the nearest node in the tree
             nearest = self.nearest_node(random_node)
             
-            # 3. Steer towards the random node and check for collision
+            # Steer towards the random node and check for collision
             _,path = self.get_pixels_between_points(nearest.coord, random_node.coord)
             
             if node_expansion:
                 node,edges= self.node_exp(path,random_node)
                 if edges:
                     return node,edges
-            
           
         raise AssertionError("Path not found\n")
 
@@ -199,22 +207,7 @@ class RRT:
                     parent = n
                     min_cost = cost
         return parent, min_cost
-########################################Testing#####################################################
-    # def rewire(self, neighbors, new_node):
-    #     print("Rewiring nodes...")
-    #     for neighbor in neighbors:
-    #         new_cost = self.Cost[neighbor.coord] + self.distance(new_node, neighbor)
-    #         print(f"Checking neighbor {neighbor.coord}")
-    #         print(f"Current cost: {self.Cost[neighbor.coord]}, New cost: {new_cost}")
-    #         print(f"Collision: {self.is_collision(new_node.coord, neighbor.coord)}")
-
-    #         if self.Cost[new_node.coord]<new_cost and not self.is_collision(new_node.coord, neighbor.coord):
-    #             print(f"Rewiring neighbor {neighbor.coord} to new parent {new_node.coord}")
-    #             new_node.parent = neighbor
-    #             self.Cost[new_node.coord] = new_cost
-    #             return new_node
-########################################Testing#####################################################
-
+    
     def get_edges(self,nodes):
         edges = []
         for node in nodes:
