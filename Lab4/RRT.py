@@ -100,7 +100,8 @@ class RRT:
             qnew.parent = nearest
 
             # Check for a better parent (cost optimization)
-            for node in self.tree:
+            neighbours = self.find_nearby_nodes(qnew)
+            for node in neighbours:
                 if node is not qnew.parent and self.distance(node, qnew) <= self.step_size:
                     collision, _ = self.get_pixels_between_points(node.coord, qnew.coord)
                     if not collision and node.g + self.distance(node, qnew) < qnew.g:
@@ -139,29 +140,33 @@ class RRT:
             qnew.parent = nearest
 
             # 5. Check for a better parent (cost optimization)
-            for node in self.tree:
+            neighbours = self.find_nearby_nodes(qnew)
+            for node in neighbours:
                 if node is not qnew.parent and self.distance(node, qnew) <= self.step_size:
                     collision, _ = self.get_pixels_between_points(node.coord, qnew.coord)
                     if not collision and node.g + self.distance(node, qnew) < qnew.g:
                         qnew.g = node.g + self.distance(node, qnew)
                         qnew.parent = node
 
-            # 6. Add the new node to the tree
+            # # 6. Add the new node to the tree
             self.tree.append(qnew)
 
             # 7. Rewire the tree to ensure optimality
-         
-            for node in self.tree:
+            
+            for node in neighbours:
                 if node is not qnew and self.distance(node, qnew) <= self.step_size:
                     collision, _ = self.get_pixels_between_points(qnew.coord, node.coord)
-                    if not collision and qnew.g + self.distance(qnew, node) < node.g:
-                        node.g = qnew.g + self.distance(qnew, node)
-                        qnew.parent = node
-                        # del self.tree[-1]
-                        self.tree.append(qnew)
-             
+                    if not collision and qnew.g +self.distance(qnew, node) < node.g:
+                        node.g = qnew.g  + self.distance(qnew, node)
+                        node.parent = qnew
+                        # self.tree[self.tree.index(node)] = node
+                        
+            # Remove nodes whose parents are not in the tree
+            # self.tree.append(qnew)
+            
             # 8. Check if the goal is reached
             if self.distance(qnew, self.goal) <= self.goal_threshold:
+                # without_par = [node for node in self.tree[1::] if node.parent not in self.tree]    
                 print("Goal reached")
                 return self.tree, self.get_edges(self.tree)
 
@@ -233,8 +238,9 @@ class RRT:
         pixels = list(zip(np.round(x_values).astype(int), np.round(y_values).astype(int)))
         q_nodes = []
         for i,p in enumerate(pixels):
-            if self.map.grid[p]!=0:
-                return False
+            if 0 <= p[0] < self.map.grid.shape[0] and 0 <= p[1] < self.map.grid.shape[1]:
+                if self.map.grid[p]!=0:
+                    return False
         return True
 
     def rrt(self,smooth_path=True):
