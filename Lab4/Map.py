@@ -72,23 +72,44 @@ class Map():
         path = []
 
         plt.show()
-    """
-    def fill_path(self,vertices, edges):
-        edges.reverse()
-        path = [edges[0][1]]
-        next_v = edges[0][0]
-        i = 1
-        while next_v != 0:
-            while edges[i][1] != next_v:
-                i += 1
-            print ("path: ", path)
-            path.append(edges[i][1])
-            next_v = edges[i][0]
-        path.append(0)
-        edges.reverse()
-        path.reverse()
-        return vertices, edges, path
-    """
+
+    def plot_with_smoothing(self, goal,goal_threshold,states=[], edges=[], path=[], path2=[]):
+        plt.figure(figsize=(10, 10))
+        plt.matshow(self.grid, fignum=0)
+
+        if len(states) > 0:
+            for i,v in enumerate(states):
+                
+                plt.plot(v.coord[1], v.coord[0], "+w")
+                # plt.text(v.coord[1], v.coord[0], i, fontsize=14, color="w")
+
+            for e in edges:
+                plt.plot(
+                    [states[e[0]].coord[1], states[e[1]].coord[1]],
+                    [states[e[0]].coord[0], states[e[1]].coord[0]],
+                    "--g",
+                )
+
+            for i in range(1, len(path)):
+                plt.plot(
+                    [path[i - 1][1], path[i][1]],
+                    [path[i - 1][0], path[i][0]],
+                    "r",
+                )
+            for i in range(1, len(path2)):
+                plt.plot(
+                    [path2[i - 1][1], path2[i][1]],
+                    [path2[i - 1][0], path2[i][0]],
+                    "--b",
+                )
+            # Start
+            plt.plot(states[0].coord[1], states[0].coord[0], marker="^", c="y")
+            # Goal
+            plt.plot(states[-1].coord[1], states[-1].coord[0], c="r", marker=(5, 1))
+            plt.plot(goal[1], goal[0], c="r", marker='o', markersize=2*3.14*1.7*goal_threshold , alpha=0.3)
+        path = []
+
+        plt.show()
 
     def fill_path(self,vertices, edges):
         path = []

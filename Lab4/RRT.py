@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import random
 from Node import Node
 import math 
+import copy
 
 class RRT:
     def __init__(self, start, goal,goal_threshold, map, max_iter=1000, step_size=1, search_radius=100):
@@ -249,6 +250,8 @@ class RRT:
                 
                 if self.distance(qnew, self.goal) <= self.goal_threshold:
                     print(f"Goal reached in {k} iterations")
+                    ns_nodes = copy.deepcopy(self.tree)
+                    ns_edges = copy.deepcopy(self.get_edges(self.tree))
                     if smooth_path:
                         # # Extract path from start to goal
                         path = []
@@ -261,7 +264,7 @@ class RRT:
                         smooth_pth = self.smooth(path)
                             
                         # Return both the smoothed path and its edges
-                        return smooth_pth, self.get_edges(smooth_pth)
+                        return smooth_pth, self.get_edges(smooth_pth), ns_nodes, ns_edges
                     return self.tree, self.get_edges(self.tree)
             
     def smooth(self, nodes):
