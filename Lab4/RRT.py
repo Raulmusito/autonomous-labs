@@ -52,9 +52,11 @@ class RRT:
             return self.goal
         # Get all free cells (where grid is 0)
         free_positions = np.argwhere(self.map.grid == 0)
-        # Randomly choose one of the free cells
+        # Randomly choose one of the free cells 
         random_index = np.random.choice(len(free_positions))
-        return Node(free_positions[random_index][0],free_positions[random_index][1])
+        node = Node(free_positions[random_index][0],free_positions[random_index][1])
+
+        return node
 
     def nearest_node(self, random_node):
         return min(self.tree, key=lambda node: self.distance(node, random_node))
@@ -225,7 +227,7 @@ class RRT:
         if distance <= step_size:
             return random_node
         else:
-            theta = math.atan2(random_node.coord[0] - nearest.coord[0], random_node.coord[1] - nearest.coord[1])
+            theta = math.atan2(random_node.coord[1] - nearest.coord[1], random_node.coord[0] - nearest.coord[0])
             return Node(int(nearest.coord[0] + step_size * math.cos(theta)), int(nearest.coord[1] + step_size * math.sin(theta)))
 
     def collision_free(self, point1, point2):
@@ -253,6 +255,7 @@ class RRT:
             
             # 3. New configuration
             qnew = self.new_config(nearest, random_node, self.step_size)
+
 
             if self.collision_free((nearest.x,nearest.y), (qnew.x,qnew.y)):
                 qnew.parent = nearest
