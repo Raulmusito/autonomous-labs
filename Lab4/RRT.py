@@ -167,7 +167,7 @@ class RRT:
             # 8. Check if the goal is reached
             if self.distance(qnew, self.goal) <= self.goal_threshold:
                 # without_par = [node for node in self.tree[1::] if node.parent not in self.tree]    
-                print("Goal reached")
+                print("Goal reached with wire")
                 return self.tree, self.get_edges(self.tree)
 
         raise AssertionError("Path not found\n")
@@ -274,7 +274,6 @@ class RRT:
                             
                         # Return both the smoothed path and its edges
                         return smooth_pth, self.get_edges(smooth_pth)
-                    ###TODO: return and plot smooth path with whole tree
                     return self.tree, self.get_edges(self.tree)
             
     def smooth(self, nodes):

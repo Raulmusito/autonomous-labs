@@ -18,9 +18,6 @@ class Point:
             np.cross(l.p2.numpy() - l.p1.numpy(), l.p1.numpy() - self.numpy())
         ) / np.linalg.norm(l.p2.numpy() - l.p1.numpy())
 
-    def __str__(self):
-        return "({}, {})".format(np.round(self.x, 2), np.round(self.y, 2))
-
     def to_str(self):
         return "({}, {})".format(np.round(self.x, 2), np.round(self.y, 2))
 
@@ -86,6 +83,11 @@ class Node(Point):
 
     def __eq__(self, node):
         return self.x == node.x and self.y == node.y
+    
+    def __str__(self):
+        return "({}, {}, p: {})".format(np.round(self.x, 2), np.round(self.y, 2), (self.parent.x,self.parent.y))
 
+    def __repr__(self):
+        return "({}, {}, p: {})".format(np.round(self.x, 2), np.round(self.y, 2), (self.parent.x,self.parent.y))
 
     

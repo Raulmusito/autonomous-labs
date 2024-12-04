@@ -24,7 +24,7 @@ class Map():
         """
         try:
             # Load the image maps Lab4/maps/map3.png
-            image = Image.open(f"maps/map{self.map_number}.png").convert('L')
+            image = Image.open(f"./Lab4/maps/map{self.map_number}.png").convert('L')
         except FileNotFoundError:
             print(f"Map file 'map{self.map_number}.png' not found.")
             return None
@@ -60,8 +60,8 @@ class Map():
 
             for i in range(1, len(path)):
                 plt.plot(
-                    [states[path[i - 1]].y, states[path[i]].y],
-                    [states[path[i - 1]].x, states[path[i]].x],
+                    [path[i - 1][1], path[i][1]],
+                    [path[i - 1][0], path[i][0]],
                     "r",
                 )
             # Start
@@ -72,7 +72,7 @@ class Map():
         path = []
 
         plt.show()
-
+    """
     def fill_path(self,vertices, edges):
         edges.reverse()
         path = [edges[0][1]]
@@ -81,9 +81,21 @@ class Map():
         while next_v != 0:
             while edges[i][1] != next_v:
                 i += 1
+            print ("path: ", path)
             path.append(edges[i][1])
             next_v = edges[i][0]
         path.append(0)
         edges.reverse()
+        path.reverse()
+        return vertices, edges, path
+    """
+
+    def fill_path(self,vertices, edges):
+        path = []
+        node = vertices[-1]
+        while node.parent is not None:
+            path.append(node.coord)
+            node = node.parent
+        path.append(vertices[0].coord)
         path.reverse()
         return vertices, edges, path
