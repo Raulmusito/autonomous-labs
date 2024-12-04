@@ -64,10 +64,6 @@ class RRT:
     def find_nearby_nodes(self, node):
         return [n for n in self.tree if self.distance(n, node) < self.search_radius]
     
-    def is_collision(self, node1, node2):
-        collision, _ = self.get_pixels_between_points(node1, node2)
-        return collision
-    
     def node_exp(self,path,random_node):
         for n in path:
             new_node = Node(n[0],n[1]) 
@@ -203,17 +199,6 @@ class RRT:
           
         raise AssertionError("Path not found\n")
 
-
-    def select_parent(self, neighbors, nearest, new_node):
-        parent = nearest
-        min_cost = nearest.cost + self.distance(nearest, new_node.position)
-        for n in neighbors:
-            if not self.is_collision(n, new_node):
-                cost = n.cost + self.distance(n, new_node.position)
-                if cost < min_cost:
-                    parent = n
-                    min_cost = cost
-        return parent, min_cost
     
     def get_edges(self,nodes):
         edges = []
