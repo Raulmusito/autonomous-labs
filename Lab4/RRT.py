@@ -284,16 +284,16 @@ class RRT:
     def smooth(self, nodes):
         nodes = nodes[::-1]
         smooth_path = []
-        current_node = nodes[-1]  
+        target = nodes[-1]  
         i = 0
-        while current_node is not nodes[0]:
+        while target is not nodes[0]:
             node = nodes[i]
             i += 1
-            if self.collision_free((node.x, node.y), (current_node.x, current_node.y)):
+            if self.collision_free((node.x, node.y), (target.x, target.y)):
                 i = 0
-                smooth_path.append(current_node)
+                smooth_path.append(target)
                 smooth_path[-1].parent = node
-                current_node = node  
+                target = node  
         smooth_path.append(nodes[0])
 
         return smooth_path [::-1]
