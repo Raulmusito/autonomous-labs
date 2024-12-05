@@ -9,13 +9,34 @@ class RRT:
     def __init__(self, start, goal,goal_threshold, map, max_iter=1000, step_size=1, search_radius=100):
         self.start = start
         self.goal = goal
-        self.map = map 
+        self.map = copy.copy(map) 
         self.max_iter = max_iter
         self.step_size = step_size
         self.search_radius = search_radius
         self.goal_threshold=goal_threshold
         self.tree = [self.start]
         self.Cost = np.full(map.shape, np.inf)
+
+        self.expand_obstacle()
+    
+    def expand_obstacle(self):
+        # Expand the obstacles in the map
+        grid = copy.deepcopy(self.map.grid) # make copy not ot everwrite 
+        # For each pixel in the map
+        for i in range(self.map.grid.shape[0]): 
+            for j in range(self.map.grid.shape[1]):
+                # if pixel is obstacle
+                if self.map.grid[i,j]==1:
+                    # for each neighbor of the pixel
+                    for k in range(-1,2):
+                        for l in range(-1,2):
+                            # check neighbor is in the map
+                            if i+k>=0 and i+k<self.map.grid.shape[0] and j+l>=0 and j+l<self.map.grid.shape[1]:
+                                # make naighbor an 
+                                grid[i+k,j+l]=1
+        print("Obstacle expanded")
+        #re assign the expanded grid to the map
+        self.map.grid = grid
 
     def distance(self, node1, node2):
         return math.sqrt((node2.coord[0] - node1.coord[0])**2 + (node2.coord[1] - node1.coord[1])**2)
@@ -223,7 +244,7 @@ class RRT:
         y_values = np.linspace(point1[1], point2[1], num_steps)
 
         # Combine x and y into pixel coordinates
-        pixels = list(zip(np.round(x_values).astype(int), np.round(y_values).astype(int)))
+        pixels = list(zip((np.floor(x_values)).astype(int), (np.floor(y_values)).astype(int)))
         q_nodes = []
         for i,p in enumerate(pixels):
             if 0 <= p[0] < self.map.grid.shape[0] and 0 <= p[1] < self.map.grid.shape[1]:
