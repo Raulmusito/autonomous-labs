@@ -266,7 +266,8 @@ class RRT:
                         # Return both the smoothed path and its edges
                         return smooth_pth, self.get_edges(smooth_pth), ns_nodes, ns_edges
                     return self.tree, self.get_edges(self.tree)
-            
+        raise AssertionError("Path not found\n")
+    '''
     def smooth(self, nodes):
         smooth_path = [nodes[-1]]  
         current_node = nodes[-1]  
@@ -278,6 +279,23 @@ class RRT:
                 current_node = nodes[i + 1]  # update current_node to the last valid node
         nodes[0].parent=smooth_path[-1]
         smooth_path.append(nodes[0])
-        return smooth_path
+        return smooth_path'''
+    
+    def smooth(self, nodes):
+        nodes = nodes[::-1]
+        smooth_path = []
+        current_node = nodes[-1]  
+        i = 0
+        while current_node is not nodes[0]:
+            node = nodes[i]
+            i += 1
+            if self.collision_free((node.x, node.y), (current_node.x, current_node.y)):
+                i = 0
+                smooth_path.append(current_node)
+                smooth_path[-1].parent = node
+                current_node = node  
+        smooth_path.append(nodes[0])
+
+        return smooth_path [::-1]
 
             

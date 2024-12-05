@@ -8,7 +8,7 @@ if __name__ == "__main__":
 
     # Choose a map 0-3
     map_number = 0
-    goal_threshold = 5
+    goal_threshold = 0
     max_iter=100000
     step_size=10
     search_radius=10

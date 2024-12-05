@@ -85,9 +85,15 @@ class Node(Point):
         return self.x == node.x and self.y == node.y
     
     def __str__(self):
-        return "({}, {}, p: {})".format(np.round(self.x, 2), np.round(self.y, 2), (self.parent.x,self.parent.y))
+        if self.parent is None:
+            return "({}, {}, p: None)".format(np.round(self.x, 2), np.round(self.y, 2))
+        else:
+            return "({}, {}, p: {})".format(np.round(self.x, 2), np.round(self.y, 2), (self.parent.x,self.parent.y))
 
     def __repr__(self):
-        return "({}, {}, p: {})".format(np.round(self.x, 2), np.round(self.y, 2), (self.parent.x,self.parent.y))
+        if self.parent is None:
+            return "({}, {}, p: None)".format(np.round(self.x, 2), np.round(self.y, 2))
+        else:
+            return "({}, {}, p: {})".format(np.round(self.x, 2), np.round(self.y, 2), (self.parent.x,self.parent.y))
 
     
