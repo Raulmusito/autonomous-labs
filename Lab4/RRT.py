@@ -144,7 +144,6 @@ class RRT:
     def rewire(self, max_run=False):
         self.Cost[self.start.coord] = 0  # Set cost of the start node to 0
         self.start.g = 0  # Initialize g value for the start node
-        best_path = []
 
         for i in tqdm(range(self.max_iter)):
             # Sample a random node
@@ -289,19 +288,6 @@ class RRT:
                         return smooth_pth, self.get_edges(smooth_pth), ns_nodes, ns_edges
                     return self.tree, self.get_edges(self.tree)
         raise AssertionError("Path not found\n")
-    '''
-    def smooth(self, nodes):
-        smooth_path = [nodes[-1]]  
-        current_node = nodes[-1]  
-        for i in range(len(nodes) - 2, -1, -1): #reversed traversal
-            node = nodes[i]
-            if not self.collision_free((node.x, node.y), (current_node.x, current_node.y)):
-                nodes[i + 1].parent = smooth_path[-1]
-                smooth_path.append(nodes[i + 1])
-                current_node = nodes[i + 1]  # update current_node to the last valid node
-        nodes[0].parent=smooth_path[-1]
-        smooth_path.append(nodes[0])
-        return smooth_path'''
     
     def smooth(self, nodes):
         nodes = nodes[::-1]
