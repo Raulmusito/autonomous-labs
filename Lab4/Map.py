@@ -24,7 +24,7 @@ class Map():
         """
         try:
             # Load the image maps Lab4/maps/map3.png
-            image = Image.open(f"./Lab4/maps/map{self.map_number}.png").convert('L')
+            image = Image.open(f"maps/map{self.map_number}.png").convert('L')
         except FileNotFoundError:
             print(f"Map file 'map{self.map_number}.png' not found.")
             return None
@@ -41,7 +41,7 @@ class Map():
 
         return grid
     
-    def plot(self, goal,goal_threshold,states=[], edges=[], path=[]):
+    def plot(self,step_size,search_radius,goal,goal_threshold,states=[], edges=[], path=[]):
         plt.figure(figsize=(10, 10))
         plt.matshow(self.grid, fignum=0)
 
@@ -67,13 +67,17 @@ class Map():
             # Start
             plt.plot(states[0].coord[1], states[0].coord[0], marker="^", c="y")
             # Goal
-            plt.plot(states[-1].coord[1], states[-1].coord[0], c="r", marker=(5, 1))
+            if not path: plt.plot(states[-1].coord[1], states[-1].coord[0], c="r", marker=(5, 1))
+            else: plt.plot(path[-1][1], path[-1][0], c="r", marker=(5, 1))
             plt.plot(goal[1], goal[0], c="r", marker='o', markersize=2*3.14*1.7*goal_threshold , alpha=0.3)
+            plt.title(f"Step Size: {step_size}, Search Radius: {search_radius}", fontsize=14, color='black')
+
         path = []
 
+        plt.savefig(f"rrt*_results/rrt.png")
         plt.show()
 
-    def plot_with_smoothing(self, goal,goal_threshold,states=[], edges=[], path=[], path2=[]):
+    def plot_with_smoothing(self,step_size,search_radius,goal,goal_threshold,states=[], edges=[], path=[], path2=[]):
         plt.figure(figsize=(10, 10))
         plt.matshow(self.grid, fignum=0)
 
@@ -107,8 +111,10 @@ class Map():
             # Goal
             plt.plot(states[-1].coord[1], states[-1].coord[0], c="r", marker=(5, 1))
             plt.plot(goal[1], goal[0], c="r", marker='o', markersize=2*3.14*1.7*goal_threshold , alpha=0.3)
-        path = []
+            plt.title(f"Step Size: {step_size}, Search Radius: {search_radius}", fontsize=14, color='black')
 
+        path = []
+        plt.savefig(f"rrt_results/smoothing.png")
         plt.show()
 
     def fill_path(self,vertices, edges):

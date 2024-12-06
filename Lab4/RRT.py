@@ -4,6 +4,7 @@ import random
 from Node import Node
 import math 
 import copy
+from tqdm import tqdm
 
 class RRT:
     def __init__(self, start, goal,goal_threshold, map, max_iter=1000, step_size=1, search_radius=100):
@@ -85,24 +86,26 @@ class RRT:
     
     def find_nearby_nodes(self, node):
         return [n for n in self.tree if self.distance(n, node) < self.search_radius]
-    
-    def node_exp(self,path,random_node):
-        for n in path:
-            new_node = Node(n[0],n[1]) 
-            nearest = self.nearest_node(random_node)
-            new_node.parent = nearest
-            self.tree.append(new_node)
-            if self.distance(new_node, self.goal) <= self.goal_threshold:
-                print("Goal reached")
-                # self.map.plot(states=self.tree,edges=self.get_edges(self.tree),path=[],goal=self.goal.coord,goal_threshold=self.goal_threshold)
-                return self.tree, self.get_edges(self.tree)
-        return None, None
+     
+    def min_paths(self, tree):
+        goal_idx = [i+1 for i,n in enumerate(tree[1:]) if n.coord == self.goal.coord and n.parent.coord !=n.coord]
+        paths = []
+        for g in goal_idx:
+            node = tree[g]
+            path = [node]
+            while node.parent:
+                node=node.parent
+                path.append(node)
+            paths.append(path)
+        
+        return paths
+
     
     def cost_optim(self):
         
         self.Cost[self.start.coord] = 0   
         self.start.g = 0  
-        for _ in range(self.max_iter):
+        for _ in tqdm(range(self.max_iter)):
             # Sample a random node
             random_node = self.get_random_node(0.2)
 
@@ -119,7 +122,7 @@ class RRT:
             qnew.g = nearest.g + self.distance(nearest, qnew)
             qnew.parent = nearest
 
-            # Check for a better parent (cost optimization)
+            # check for a better parent
             neighbours = self.find_nearby_nodes(qnew)
             for node in neighbours:
                 if node is not qnew.parent and self.distance(node, qnew) <= self.step_size:
@@ -138,86 +141,84 @@ class RRT:
 
         raise AssertionError("Path not found\n")
 
-    def rewire(self):
+    def rewire(self, max_run=False):
         self.Cost[self.start.coord] = 0  # Set cost of the start node to 0
         self.start.g = 0  # Initialize g value for the start node
+        best_path = []
 
-        for _ in range(self.max_iter):
-            # 1. Sample a random node
+        for i in tqdm(range(self.max_iter)):
+            # Sample a random node
             random_node = self.get_random_node(0.2)
 
-            # 2. Find the nearest node in the tree
+            # Find the nearest node in the tree
             nearest = self.nearest_node(random_node)
 
-            # 3. Steer towards the random node and check for collision
+            # Steer towards the random node and check for collision
             qnew = self.new_config(nearest, random_node, self.step_size)
+            
             collision, _ = self.get_pixels_between_points(qnew.coord, nearest.coord)
             if collision:
                 continue  # Skip if the path is not collision-free
 
-            # 4. Initialize the cost of the new node
+            # Initialize the cost of the new node
             qnew.g = nearest.g + self.distance(nearest, qnew)
-            qnew.parent = nearest
+            if nearest.coord != qnew.coord:  # Prevent self-parenting
+                qnew.parent = nearest
+            else:
+                continue  # Skip adding qnew if it is the same as nearest to avoid self-parenting
 
-            # 5. Check for a better parent (cost optimization)
+            # Check for a better parent 
             neighbours = self.find_nearby_nodes(qnew)
             for node in neighbours:
                 if node is not qnew.parent and self.distance(node, qnew) <= self.step_size:
                     collision, _ = self.get_pixels_between_points(node.coord, qnew.coord)
                     if not collision and node.g + self.distance(node, qnew) < qnew.g:
-                        qnew.g = node.g + self.distance(node, qnew)
-                        qnew.parent = node
+                        if node.coord != qnew.coord:  # Prevent self-parenting
+                            qnew.g = node.g + self.distance(node, qnew)
+                            qnew.parent = node
 
-            # # 6. Add the new node to the tree
+            # Add the new node to the tree
             self.tree.append(qnew)
 
-            # 7. Rewire the tree to ensure optimality
-            
+            # Rewire the tree to ensure optimality
             for node in neighbours:
                 if node is not qnew and self.distance(node, qnew) <= self.step_size:
                     collision, _ = self.get_pixels_between_points(qnew.coord, node.coord)
-                    if not collision and qnew.g +self.distance(qnew, node) < node.g:
-                        node.g = qnew.g  + self.distance(qnew, node)
-                        node.parent = qnew
-                        # self.tree[self.tree.index(node)] = node
-                        
-            # Remove nodes whose parents are not in the tree
-            # self.tree.append(qnew)
-            
-            # 8. Check if the goal is reached
+                    if not collision and qnew.g + self.distance(qnew, node) < node.g:
+                        if qnew.coord != node.coord:  # Prevent self-parenting
+                            node.g = qnew.g + self.distance(qnew, node)
+                            node.parent = qnew
+
+            # Check if the goal is reached
             if self.distance(qnew, self.goal) <= self.goal_threshold:
-                # without_par = [node for node in self.tree[1::] if node.parent not in self.tree]    
-                print("Goal reached with wire")
-                return self.tree, self.get_edges(self.tree)
+                if not max_run:
+                    print("Goal reached with rewire")
+                    return None,None,self.tree, self.get_edges(self.tree)
+                else:
+                    print("Goal reached with rewire")
 
-        raise AssertionError("Path not found\n")
+        if max_run:
+            paths = self.min_paths(self.tree) #find shortest patt 
+            if not paths:
+                raise AssertionError("Path not found\n")
+            short_path = min(paths, key=len) 
+            return short_path,self.get_edges(short_path), self.tree,self.get_edges(self.tree)
+        if self.goal not in self.tree:
+            raise AssertionError("Path not found\n")
 
-    def rrt_star(self,node_expansion=False,cost_optim=False,rewire=False):
+
+    def rrt_star(self,node_expansion=False,cost_optim=False,rewire=False,max_run=False):
         self.Cost[self.start.coord] = 0  # Initialize cost of start node
         
         if cost_optim:
             node,edges= self.cost_optim()
             if edges:
-                return node,edges
+                return None,None,node,edges
         if rewire:
-            node,edges= self.rewire()
+            fill_pth,fill_edge,node,edges= self.rewire(max_run=max_run)
             if edges:
-                return node,edges
-            
-        for _ in range(self.max_iter):
-            # Sample a random node
-            random_node = self.get_random_node(0.2) 
-
-            #Find the nearest node in the tree
-            nearest = self.nearest_node(random_node)
-            
-            # Steer towards the random node and check for collision
-            _,path = self.get_pixels_between_points(nearest.coord, random_node.coord)
-            
-            if node_expansion:
-                node,edges= self.node_exp(path,random_node)
-                if edges:
-                    return node,edges
+                fill_pth = fill_pth[::-1] if max_run else fill_pth
+                return fill_pth,fill_edge,node,edges
           
         raise AssertionError("Path not found\n")
 
