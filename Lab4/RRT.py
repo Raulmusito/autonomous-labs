@@ -265,7 +265,7 @@ class RRT:
         return True
 
     def rrt(self,smooth_path=True):
-        for k in range(self.max_iter):
+        for k in tqdm(range(self.max_iter)):
             # 1. Sample a random node
             random_node = self.get_random_node(0.2) 
 
@@ -285,6 +285,8 @@ class RRT:
                     print(f"Goal reached in {k} iterations")
                     ns_nodes = copy.deepcopy(self.tree)
                     ns_edges = copy.deepcopy(self.get_edges(self.tree))
+                    if self.pth_found_after == None: 
+                        self.pth_found_after=k
                     if smooth_path:
                         # # Extract path from start to goal
                         path = []

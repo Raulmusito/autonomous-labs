@@ -5,19 +5,19 @@ from RRT import RRT
 
 if __name__ == "__main__":
     
-    rrt_star = True  # If true run RRT* else RRT 
+    rrt_star = False  # If true run RRT* else RRT 
 
     max_run_rewire = True  # Run for max iteration
     rewire = True   # Run rewire with first found path
     cost_optim = False #Run only Cost Optimization   
 
-    for i in [0]:#[0,1,3]:
+    for i in [2]:# [0,1,2,3]:
         # Choose a map 0-3
         map_number = i
         goal_threshold = 0  
-        max_iter=10000
-        step_size=10
-        search_radius=20
+        max_iter=20000
+        step_size=20
+        search_radius=40
         p_bias=0.2
         caption = {
             "type":"rrt*" if rrt_star else "rrt",
@@ -60,7 +60,8 @@ if __name__ == "__main__":
                 _,_,path=grid.fill_path(nodes, edges)
                 grid.plot_with_smoothing(states=ns_nodes,edges=ns_edges,path=ns_path,goal=goal.coord,
                                         goal_threshold=goal_threshold, path2=path,caption=caption)   
-            elif (rewire or cost_optim)==True:
+                
+            elif rrt_star and (rewire or cost_optim)==True:
                 fill_pth,fill_edges,nodes,edges = rrt.rrt_star(cost_optim=cost_optim,rewire=rewire,max_run=max_run_rewire)
                 caption["first_pth_found_after"] = rrt.pth_found_after
                 caption["path_length"] = rrt.path_length

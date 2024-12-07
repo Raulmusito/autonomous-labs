@@ -84,9 +84,9 @@ class Map():
         plt.matshow(self.grid, fignum=0)
 
         if len(states) > 0:
-            for i,v in enumerate(states):
+            # for i,v in enumerate(states):
                 
-                plt.plot(v.coord[1], v.coord[0], "+w")
+            #     plt.plot(v.coord[1], v.coord[0], "+w")
                 # plt.text(v.coord[1], v.coord[0], i, fontsize=14, color="w")
 
             for e in edges:
@@ -118,6 +118,8 @@ class Map():
                f"p_bias:{caption['p']},Goal_threshold: {caption['goal_threshold']},\n First_path_found_after: {caption['first_pth_found_after']}, " \
                f"Max_iterations: {caption['max_iterations']}, Path_length: {caption['path_length']},Max_run:{caption['max_run']}"
             plt.figtext(0.5, 0.01, caption_text, ha="center", fontsize=10, wrap=True)
+             
+
 
         path = []
         plt.savefig(f"{caption['type']}_results/{caption['type']}_map{caption['map_number']}_max_run_{caption['max_run']}.png")
