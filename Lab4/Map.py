@@ -41,14 +41,14 @@ class Map():
 
         return grid
     
-    def plot(self,step_size,search_radius,goal,goal_threshold,states=[], edges=[], path=[]):
+    def plot(self,goal,states=[], edges=[], path=[],caption={}):
         plt.figure(figsize=(10, 10))
         plt.matshow(self.grid, fignum=0)
 
         if len(states) > 0:
-            for i,v in enumerate(states):
+            # for i,v in enumerate(states):
                 
-                plt.plot(v.coord[1], v.coord[0], "+w")
+                # plt.plot(v.coord[1], v.coord[0], "+w")
                 # plt.text(v.coord[1], v.coord[0], i, fontsize=14, color="w")
 
             for e in edges:
@@ -69,15 +69,17 @@ class Map():
             # Goal
             if not path: plt.plot(states[-1].coord[1], states[-1].coord[0], c="r", marker=(5, 1))
             else: plt.plot(path[-1][1], path[-1][0], c="r", marker=(5, 1))
-            plt.plot(goal[1], goal[0], c="r", marker='o', markersize=2*3.14*1.7*goal_threshold , alpha=0.3)
-            plt.title(f"Step Size: {step_size}, Search Radius: {search_radius}", fontsize=14, color='black')
-
+            plt.plot(goal[1], goal[0], c="r", marker='o', markersize=2*3.14*1.7*caption["goal_threshold"] , alpha=0.3)
+            caption_text = f"Step Size: {caption['step_size']}, Search Radius: {caption['search_radius']}, " \
+               f"p_bias:{caption['p']},Goal_threshold: {caption['goal_threshold']},\n First_path_found_after: {caption['first_pth_found_after']}, " \
+               f"Max_iterations: {caption['max_iterations']}, Path_length: {caption['path_length']},Max_run:{caption['max_run']}"
+            plt.figtext(0.5, 0.01, caption_text, ha="center", fontsize=10, wrap=True)
         path = []
 
-        plt.savefig(f"rrt*_results/rrt.png")
+        plt.savefig(f"{caption['type']}_results/{caption['type']}_map{caption['map_number']}_max_run_{caption['max_run']}.png")
         plt.show()
 
-    def plot_with_smoothing(self,step_size,search_radius,goal,goal_threshold,states=[], edges=[], path=[], path2=[]):
+    def plot_with_smoothing(self,goal,goal_threshold,states=[], edges=[], path=[], path2=[],caption={}):
         plt.figure(figsize=(10, 10))
         plt.matshow(self.grid, fignum=0)
 
@@ -111,10 +113,15 @@ class Map():
             # Goal
             plt.plot(states[-1].coord[1], states[-1].coord[0], c="r", marker=(5, 1))
             plt.plot(goal[1], goal[0], c="r", marker='o', markersize=2*3.14*1.7*goal_threshold , alpha=0.3)
-            plt.title(f"Step Size: {step_size}, Search Radius: {search_radius}", fontsize=14, color='black')
+            # plt.title(f"Step Size: {step_size}, Search Radius: {search_radius}", fontsize=14, color='black')
+            caption_text = f"Step Size: {caption['step_size']}, Search Radius: {caption['search_radius']}, " \
+               f"p_bias:{caption['p']},Goal_threshold: {caption['goal_threshold']},\n First_path_found_after: {caption['first_pth_found_after']}, " \
+               f"Max_iterations: {caption['max_iterations']}, Path_length: {caption['path_length']},Max_run:{caption['max_run']}"
+            plt.figtext(0.5, 0.01, caption_text, ha="center", fontsize=10, wrap=True)
 
         path = []
-        plt.savefig(f"rrt_results/smoothing.png")
+        plt.savefig(f"{caption['type']}_results/{caption['type']}_map{caption['map_number']}_max_run_{caption['max_run']}.png")
+        # plt.savefig(f"rrt_results/smoothing.png")
         plt.show()
 
     def fill_path(self,vertices, edges):

@@ -7,7 +7,7 @@ import copy
 from tqdm import tqdm
 
 class RRT:
-    def __init__(self, start, goal,goal_threshold, map, max_iter=1000, step_size=1, search_radius=100):
+    def __init__(self, start, goal,p,goal_threshold, map, max_iter=1000, step_size=1, search_radius=100):
         self.start = start
         self.goal = goal
         self.map = copy.copy(map) 
@@ -15,6 +15,9 @@ class RRT:
         self.step_size = step_size
         self.search_radius = search_radius
         self.goal_threshold=goal_threshold
+        self.p=p
+        self.path_length=None
+        self.pth_found_after=None
         self.tree = [self.start]
         self.Cost = np.full(map.shape, np.inf)
 
@@ -90,13 +93,13 @@ class RRT:
     def min_paths(self, tree):
         goal_idx = [i+1 for i,n in enumerate(tree[1:]) if n.coord == self.goal.coord and n.parent.coord !=n.coord]
         paths = []
-        for g in goal_idx:
-            node = tree[g]
-            path = [node]
-            while node.parent:
-                node=node.parent
-                path.append(node)
-            paths.append(path)
+        # for g in goal_idx:
+        node = tree[goal_idx[-1]]
+        path = [node]
+        while node.parent:
+            node=node.parent
+            path.append(node)
+        paths.append(path)
         
         return paths
 
@@ -105,9 +108,9 @@ class RRT:
         
         self.Cost[self.start.coord] = 0   
         self.start.g = 0  
-        for _ in tqdm(range(self.max_iter)):
+        for i in tqdm(range(self.max_iter)):
             # Sample a random node
-            random_node = self.get_random_node(0.2)
+            random_node = self.get_random_node(self.p)
 
             # Find the nearest node in the tree
             nearest = self.nearest_node(random_node)
@@ -137,6 +140,9 @@ class RRT:
             # Check if the goal is reached
             if self.distance(qnew, self.goal) <= self.goal_threshold:
                 print("Goal reached")
+                if self.pth_found_after == None:
+                        print("Goal reached with rewire")
+                        self.pth_found_after=i 
                 return self.tree, self.get_edges(self.tree)
 
         raise AssertionError("Path not found\n")
@@ -161,6 +167,7 @@ class RRT:
 
             # Initialize the cost of the new node
             qnew.g = nearest.g + self.distance(nearest, qnew)
+
             if nearest.coord != qnew.coord:  # Prevent self-parenting
                 qnew.parent = nearest
             else:
@@ -194,27 +201,32 @@ class RRT:
                     print("Goal reached with rewire")
                     return None,None,self.tree, self.get_edges(self.tree)
                 else:
-                    print("Goal reached with rewire")
+                    if self.pth_found_after == None:
+                        print("Goal reached with rewire")
+                        self.pth_found_after=i 
 
         if max_run:
-            paths = self.min_paths(self.tree) #find shortest patt 
-            if not paths:
-                raise AssertionError("Path not found\n")
-            short_path = min(paths, key=len) 
-            return short_path,self.get_edges(short_path), self.tree,self.get_edges(self.tree)
-        if self.goal not in self.tree:
+            if self.goal in self.tree:
+                paths = self.min_paths(self.tree) #find shortest patt 
+                if not paths :
+                    raise AssertionError("Path not found\n")
+                short_path = min(paths, key=len) 
+                return short_path,self.get_edges(short_path), self.tree,self.get_edges(self.tree)
+        if self.goal not in self.tree: 
             raise AssertionError("Path not found\n")
 
 
-    def rrt_star(self,node_expansion=False,cost_optim=False,rewire=False,max_run=False):
+    def rrt_star(self,cost_optim=True,rewire=False,max_run=False):
         self.Cost[self.start.coord] = 0  # Initialize cost of start node
         
         if cost_optim:
             node,edges= self.cost_optim()
+            self.path_length = len(node)
             if edges:
                 return None,None,node,edges
         if rewire:
             fill_pth,fill_edge,node,edges= self.rewire(max_run=max_run)
+            if fill_pth:self.path_length = len(fill_pth)
             if edges:
                 fill_pth = fill_pth[::-1] if max_run else fill_pth
                 return fill_pth,fill_edge,node,edges
