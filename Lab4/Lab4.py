@@ -7,17 +7,17 @@ if __name__ == "__main__":
     
     rrt_star = False  # If true run RRT* else RRT 
 
-    max_run_rewire = True  # Run for max iteration
+    max_run_rewire = False  # Run for max iteration
     rewire = True   # Run rewire with first found path
     cost_optim = False #Run only Cost Optimization   
 
-    for i in [2]:# [0,1,2,3]:
+    for i in  [0,1,2,3]:
         # Choose a map 0-3
         map_number = i
         goal_threshold = 0  
         max_iter=20000
-        step_size=20
-        search_radius=40
+        step_size=10
+        search_radius=20
         p_bias=0.2
         caption = {
             "type":"rrt*" if rrt_star else "rrt",
@@ -56,6 +56,8 @@ if __name__ == "__main__":
             if not rrt_star:
                 #if no smoothing, the function will return 2 values
                 nodes,edges, ns_nodes, ns_edges = rrt.rrt(smooth_path=True) 
+                caption["first_pth_found_after"] = rrt.pth_found_after
+                caption["path_length"] = rrt.path_length
                 _,_,ns_path=grid.fill_path(ns_nodes, ns_edges)
                 _,_,path=grid.fill_path(nodes, edges)
                 grid.plot_with_smoothing(states=ns_nodes,edges=ns_edges,path=ns_path,goal=goal.coord,

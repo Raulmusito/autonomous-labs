@@ -140,9 +140,8 @@ class RRT:
             # Check if the goal is reached
             if self.distance(qnew, self.goal) <= self.goal_threshold:
                 print("Goal reached")
-                if self.pth_found_after == None:
-                        print("Goal reached with rewire")
-                        self.pth_found_after=i 
+                if self.pth_found_after == None: 
+                    self.pth_found_after=i 
                 return self.tree, self.get_edges(self.tree)
 
         raise AssertionError("Path not found\n")
@@ -199,6 +198,7 @@ class RRT:
             if self.distance(qnew, self.goal) <= self.goal_threshold:
                 if not max_run:
                     print("Goal reached with rewire")
+                    self.pth_found_after=i 
                     return None,None,self.tree, self.get_edges(self.tree)
                 else:
                     if self.pth_found_after == None:
