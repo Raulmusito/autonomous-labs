@@ -66,19 +66,19 @@ class MapEnv:
         # plt.show()
         plt.pause(0.1) 
 
-    def render_live(self, i=0, episodic_reward=0,avg_reward=0,save_frames=False):
+    def render_live(self, i=0, episodic_reward=0,avg_reward=0,goal_reached=False,save_frames=False):
         if not hasattr(self, 'fig'):   
             self.fig, self.ax = plt.subplots()  
             self.im = self.ax.imshow(self.map, cmap="jet")   
-            self.ax.scatter(self.current_state[1], self.current_state[0], c='r' )  # Agent
             self.ax.scatter(self.goal[1], self.goal[0], c='g' )  # Goal
+            self.ax.scatter(self.current_state[1], self.current_state[0], c='r' )  # Agent
             # self.ax.legend()
             # self.fig.colorbar(self.im)
         else:
             self.ax.clear()  # Clear the previous plot
             self.ax.imshow(self.map, cmap="jet")  # Redraw the map
-            self.ax.scatter(self.current_state[1], self.current_state[0], c='r' )  # Update agent
             self.ax.scatter(self.goal[1], self.goal[0], c='g')   # Update goal
+            self.ax.scatter(self.current_state[1], self.current_state[0], c='r' )  # Update agent
             # self.ax.legend()
 
         if episodic_reward is not None:
@@ -95,10 +95,18 @@ class MapEnv:
                 transform=self.ax.transAxes, fontsize=10, color="white", 
                 verticalalignment="top", horizontalalignment="left", 
                 fontweight='bold' 
-            )
-        episodic_reward
+            ) 
+        
+        if goal_reached:
+           self.ax.text(
+                0.4, 0.98, f"Goal Reached!", 
+                transform=self.ax.transAxes, fontsize=10, color="white", 
+                verticalalignment="top", horizontalalignment="left", 
+                fontweight='bold' 
+            ) 
 
         if save_frames:
             self.fig.savefig(f"q_learning_{i:04}.png", dpi=300)  # Save frames
 
+         
         plt.pause(0.1)  

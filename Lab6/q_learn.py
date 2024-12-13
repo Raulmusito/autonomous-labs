@@ -68,6 +68,7 @@ class QLearning:
                 # This function should return the total reward obtained in this episode
                 # ...
                 a = None
+                goal_reached=False
                 episodic_reward = 0
                 self.env.current_state= self.env.reset()
                 prev_state = self.env.get_state()
@@ -77,9 +78,10 @@ class QLearning:
                     prev_state = new_state
                     episodic_reward+=reward
                     # print("epi_reward:",episodic_reward)
-                    self.env.render_live(episodic_reward=episodic_reward,avg_reward=None)
                     if new_state ==  tuple(self.env.goal):
                          print("Goal Reached\n")
+                         goal_reached=True
+                    self.env.render_live(episodic_reward=episodic_reward,avg_reward=None,goal_reached=goal_reached)
                     if ended:
                         break
                 plt.pause(2)
