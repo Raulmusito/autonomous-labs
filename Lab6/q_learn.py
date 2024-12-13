@@ -78,7 +78,7 @@ class QLearning:
                     episodic_reward+=reward
                     # print("epi_reward:",episodic_reward)
                     self.env.render_live(episodic_reward=episodic_reward,avg_reward=None)
-                    if list(new_state) ==  all(self.env.goal):
+                    if new_state ==  tuple(self.env.goal):
                          print("Goal Reached\n")
                     if ended:
                         break
@@ -128,10 +128,10 @@ plt.colorbar()
 
 print(np.shape(grid_map))
 # Create an environment and a QLearning agent to learn it. Plot the averaged rewards stored.
-eps=5000
-eps_steps =30
+eps=10000
+eps_steps =50
 env = MapEnv(map=grid_map, goal=np.array([4, 4]), max_steps=eps_steps)
-agent = QLearning(env, alpha=0.003, gamma=0.95, epsilon=0.5, n_episodes=eps,visualize=False)
+agent = QLearning(env, alpha=0.03, gamma=0.95, epsilon=0.5, n_episodes=eps,visualize=False)
 agent.train(n_episodes=eps, check_every_n=eps/4,render=False)
 optimal_policy = agent.get_optimal_policy()
 optimal_value = agent.value_function()

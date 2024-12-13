@@ -38,7 +38,7 @@ class MapEnv:
         
         new_state = x+dx,y+dy
         
-        if list(new_state) == all(self.goal): 
+        if new_state== tuple(self.goal): 
           reward = 1
           ended = True
         else: reward =-1
